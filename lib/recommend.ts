@@ -2,9 +2,12 @@ import type {
   Benchmark,
   BuildRequest,
   BuildResult,
+  Cpu,
   GameResult,
   Gpu,
+  Motherboard,
   Part,
+  Psu,
   Resolution,
   Socket,
 } from "./types";
@@ -56,6 +59,44 @@ function bestAffordable<T extends { price: number }>(parts: T[], budget: number)
 function cheapestMeeting<T extends { price: number }>(parts: T[], predicate: (p: T) => boolean): T {
   const meeting = parts.filter(predicate);
   return cheapest(meeting.length > 0 ? meeting : parts);
+}
+
+/**
+ * Spend real leftover budget upgrading the CPU (same socket, so the already-chosen
+ * motherboard/RAM stay valid) instead of just reporting it as unused headroom — e.g. a
+ * Ryzen 5 5500 build with $50+ to spare should bump to a 5600 rather than sitting idle.
+ * Only upgrades while the existing motherboard's tier and PSU's wattage can still support
+ * the stronger CPU; never re-picks the motherboard/PSU themselves.
+ */
+function upgradeCpuWithLeftoverBudget(
+  startCpu: Cpu,
+  motherboard: Motherboard,
+  psu: Psu,
+  gpu: Gpu,
+  cpus: Cpu[],
+  startRemaining: number
+): { cpu: Cpu; remaining: number } {
+  let cpu = startCpu;
+  let remaining = startRemaining;
+
+  while (true) {
+    const candidates = cpus.filter((c) => {
+      if (c.socket !== cpu.socket || c.tier <= cpu.tier) return false;
+      if (c.price - cpu.price > remaining) return false;
+      if (motherboard.tier < c.tier - MOBO_TIER_SLACK) return false;
+      const required = Math.max(gpu.recommendedPsuWatts, gpu.tdp + c.tdp + PSU_HEADROOM_WATTS);
+      return psu.wattage >= required;
+    });
+    if (candidates.length === 0) break;
+
+    // Best tier affordable; cheapest as a tie-breaker.
+    candidates.sort((a, b) => b.tier - a.tier || a.price - b.price);
+    const next = candidates[0];
+    remaining -= next.price - cpu.price;
+    cpu = next;
+  }
+
+  return { cpu, remaining };
 }
 
 export function recommendBuild(
@@ -112,7 +153,7 @@ export function recommendBuild(
   const cpuCandidates = cpus
     .filter((c) => c.tier >= gpu.tier - CPU_TIER_SLACK)
     .sort((a, b) => a.price - b.price);
-  const cpu = cpuCandidates.length > 0 ? cpuCandidates[0] : cheapest(cpus);
+  let cpu = cpuCandidates.length > 0 ? cpuCandidates[0] : cheapest(cpus);
 
   const motherboardCandidates = motherboards
     .filter((m) => m.socket === cpu.socket && m.tier >= cpu.tier - MOBO_TIER_SLACK)
@@ -145,8 +186,14 @@ export function recommendBuild(
   remaining -= ram.price;
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
   remaining -= storage.price;
-  // The case is the one place spending leftover budget has a real (if minor) upside — cooling,
-  // build quality, aesthetics — and it's capped low, so it won't run away with the budget.
+
+  // Real leftover budget goes toward a CPU upgrade before anything else — more genuine value
+  // than a nicer case, and the whole reason this step exists is to not leave money on the
+  // table when e.g. a 5500 build could stretch to a 5600 for a few dollars more.
+  ({ cpu, remaining } = upgradeCpuWithLeftoverBudget(cpu, motherboard, psu, gpu, cpus, remaining));
+
+  // The case is the one place spending any budget still left has a real (if minor) upside —
+  // cooling, build quality, aesthetics — and it's capped low, so it won't run away with it.
   const pcCase = bestAffordable(cases, remaining);
   remaining -= pcCase.price;
 
