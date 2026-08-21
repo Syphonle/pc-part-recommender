@@ -6,8 +6,16 @@ import type {
   Gpu,
   Part,
   Resolution,
+  Socket,
 } from "./types";
 import { localPartsProvider, type PartsProvider } from "./data/provider";
+
+/** AM4 boards take DDR4; AM5 and LGA1851 both take DDR5. A RAM kit only fits a matching platform. */
+const memoryTypeForSocket: Record<Socket, "DDR4" | "DDR5"> = {
+  AM4: "DDR4",
+  AM5: "DDR5",
+  LGA1851: "DDR5",
+};
 
 /** CPU tier must be >= gpuTier - this, so it doesn't bottleneck the chosen GPU. */
 const CPU_TIER_SLACK = 2;
@@ -70,7 +78,9 @@ export function recommendBuild(
   const meetsAllTargets = (gpu: Gpu) =>
     targets.every((t) => (lookupFps(gpu.id, t.gameId, resolution) ?? 0) >= t.targetFps);
 
-  const ramTarget = cheapestMeeting(rams, (r) => r.capacityGb >= TARGET_RAM_GB);
+  // Rough floor across both memory types — the real, platform-matched pick happens below
+  // once the CPU (and therefore its socket/memory type) is known.
+  const genericRamFloor = cheapestMeeting(rams, (r) => r.capacityGb >= TARGET_RAM_GB);
   const storageTarget = cheapestMeeting(storages, (s) => s.capacityGb >= TARGET_STORAGE_GB);
 
   // Floor estimate of everything besides the GPU, so the GPU pick doesn't eat the whole budget.
@@ -79,7 +89,7 @@ export function recommendBuild(
   const minRestFloor =
     cheapest(cpus).price +
     cheapest(motherboards).price +
-    ramTarget.price +
+    genericRamFloor.price +
     storageTarget.price +
     cheapest(psus).price +
     cheapest(cases).price;
@@ -126,9 +136,12 @@ export function recommendBuild(
 
   let remaining = budget - gpu.price - cpu.price - motherboard.price - psu.price;
 
-  // RAM/storage target a sensible capacity rather than maximizing spend — going bigger than
-  // 32GB/1TB doesn't improve gaming FPS, so leftover budget shouldn't chase capacity there.
-  const ram = ramTarget.price <= remaining ? ramTarget : cheapest(rams);
+  // RAM must match the platform's memory type (DDR4 for AM4, DDR5 for AM5/LGA1851) — and
+  // target a sensible capacity rather than maximizing spend, since going bigger than 32GB
+  // doesn't improve gaming FPS, so leftover budget shouldn't chase capacity there.
+  const compatibleRams = rams.filter((r) => r.memoryType === memoryTypeForSocket[cpu.socket]);
+  const ramTarget = cheapestMeeting(compatibleRams, (r) => r.capacityGb >= TARGET_RAM_GB);
+  const ram = ramTarget.price <= remaining ? ramTarget : cheapest(compatibleRams);
   remaining -= ram.price;
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
   remaining -= storage.price;

@@ -42,6 +42,17 @@ export const gpus: Gpu[] = [
 ];
 
 export const cpus: Cpu[] = [
+  // AM4 (paired with DDR4, not DDR5) — Ryzen 5000/4000 series stuck around specifically
+  // because it's the budget lever: an AM4 CPU + motherboard + DDR4 kit is dramatically
+  // cheaper than any AM5/LGA1851 combination, especially with DDR5 prices where they are.
+  { id: "ryzen-5-4500", category: "cpu", name: "Ryzen 5 4500", brand: "AMD", price: 90, socket: "AM4", tdp: 65, tier: 2, amazonUrl: "https://www.amazon.com/AMD-4500-12-Thread-Unlocked-Processor/dp/B09VCJN7HZ" },
+  { id: "ryzen-5-5500", category: "cpu", name: "Ryzen 5 5500", brand: "AMD", price: 190, socket: "AM4", tdp: 65, tier: 3, amazonUrl: "https://www.amazon.com/AMD-5500-12-Thread-Unlocked-Processor/dp/B09VCJ171S" },
+  { id: "ryzen-5-5600", category: "cpu", name: "Ryzen 5 5600", brand: "AMD", price: 140, socket: "AM4", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/AMD-5600-12-Thread-Unlocked-Processor/dp/B09VCHR1VH" },
+  { id: "ryzen-7-5700x", category: "cpu", name: "Ryzen 7 5700X", brand: "AMD", price: 200, socket: "AM4", tdp: 65, tier: 5 },
+  // 3D V-Cache makes this punch well above its (older) generation specifically for gaming —
+  // AMD relaunched it as a "10th Anniversary Edition" in mid-2026 at this official price,
+  // undercutting the $450-800 collector pricing older stock was fetching beforehand.
+  { id: "ryzen-7-5800x3d", category: "cpu", name: "Ryzen 7 5800X3D", brand: "AMD", price: 349, socket: "AM4", tdp: 105, tier: 8, amazonUrl: "https://www.amazon.com/AMD-5800X3D-16-Thread-Processor-Technology/dp/B09VCJ2SHD" },
   { id: "ryzen-5-7500f", category: "cpu", name: "Ryzen 5 7500F", brand: "AMD", price: 150, socket: "AM5", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/AMD-Ryzen-7500F-3-7GHz-Threads/dp/B0D1CK42PV" },
   { id: "core-ultra-5-225f", category: "cpu", name: "Core Ultra 5 225F", brand: "Intel", price: 210, socket: "LGA1851", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/Intel%C2%AE-CoreTM-Desktop-Processor-P-cores/dp/B0DT7CW7VR" },
   { id: "ryzen-5-9600x", category: "cpu", name: "Ryzen 5 9600X", brand: "AMD", price: 235, socket: "AM5", tdp: 65, tier: 5, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9600X-12-Thread-Processor/dp/B0D6NN6TM7" },
@@ -59,6 +70,11 @@ export const cpus: Cpu[] = [
 // not just price — e.g. Intel's unlocked "K" CPUs need a Z-series board to actually overclock,
 // so B860 never qualifies as a match for a K-series chip regardless of its tier gap.
 export const motherboards: Motherboard[] = [
+  // AM4 — old chipsets, but still fine for the AM4 CPUs above; A520/B450/B550 all cost a
+  // fraction of any AM5/LGA1851 board.
+  { id: "mb-a520m", category: "motherboard", name: "Gigabyte A520M K V2", brand: "Gigabyte", price: 45, socket: "AM4", tier: 1, amazonUrl: "https://www.amazon.com/Gigabyte-A520M-motherboard-Socket-micro/dp/B0BXFBN121" },
+  { id: "mb-b450m", category: "motherboard", name: "ASRock B450M-HDV R4.0", brand: "ASRock", price: 55, socket: "AM4", tier: 2 },
+  { id: "mb-b550m", category: "motherboard", name: "ASUS Prime B550M-A", brand: "ASUS", price: 70, socket: "AM4", tier: 3, amazonUrl: "https://www.amazon.com/PLACA-ASUS-PRIME-B550M-A-AM4/dp/B089HDHVV6" },
   { id: "mb-a620m", category: "motherboard", name: "MSI PRO A620M-E", brand: "MSI", price: 110, socket: "AM5", tier: 1, amazonUrl: "https://www.amazon.com/MSI-PRO-A620M-Motherboard-Micro-ATX/dp/B0BZW9RG3P" },
   { id: "mb-b650m", category: "motherboard", name: "ASRock B650M PG Lightning", brand: "ASRock", price: 150, socket: "AM5", tier: 3, amazonUrl: "https://www.amazon.com/ASRock-B650M-Lightning-Socket-Type-C/dp/B0CJT9KKSD" },
   { id: "mb-b850", category: "motherboard", name: "Gigabyte B850 AORUS Elite", brand: "Gigabyte", price: 220, socket: "AM5", tier: 5, amazonUrl: "https://www.amazon.com/GIGABYTE-B850-AORUS-WIFI7-Motherboard/dp/B0DQLHVQSF" },
@@ -69,12 +85,16 @@ export const motherboards: Motherboard[] = [
 ];
 
 // DDR5 kit prices are roughly 4-5x their pre-shortage level as of August 2026 (a 32GB kit
-// that was ~$85 in 2025 now runs $340-590 depending on retailer/speed).
+// that was ~$85 in 2025 now runs $340-590 depending on retailer/speed). DDR4 has been hit
+// too (a 32GB kit that was ~$60-90 in late 2025 is now ~$188) but is still far cheaper than
+// DDR5 — one of the reasons AM4 remains a real budget lever, not just a cheaper CPU/board.
 export const rams: Ram[] = [
-  { id: "ram-16-5600", category: "ram", name: "16GB (2x8GB) DDR5-5600", brand: "Corsair", price: 210, capacityGb: 16, amazonUrl: "https://www.amazon.com/CORSAIR-Vengeance-2x8GB-5600MHz-Intel/dp/B0H6G2Z2ZV" },
-  { id: "ram-32-6000", category: "ram", name: "32GB (2x16GB) DDR5-6000", brand: "Corsair", price: 370, capacityGb: 32, amazonUrl: "https://www.amazon.com/CORSAIR-VENGEANCE-6000MHz-Compatible-Computer/dp/B0BZHTVHN5" },
-  { id: "ram-32-6400", category: "ram", name: "32GB (2x16GB) DDR5-6400 CL32", brand: "G.Skill", price: 410, capacityGb: 32, amazonUrl: "https://www.amazon.com/G-Skill-Trident-PC5-51200-CL32-39-39-102-F5-6400J3239G16GA2-TZ5RK/dp/B09QS2K59B" },
-  { id: "ram-64-6000", category: "ram", name: "64GB (2x32GB) DDR5-6000", brand: "G.Skill", price: 700, capacityGb: 64, amazonUrl: "https://www.amazon.com/G-Skill-Trident-288-Pin-CL30-40-40-96-F5-6000J3040G32GX2-TZ5N/dp/B0BJP3MRW1" },
+  { id: "ram-16-3200-ddr4", category: "ram", name: "16GB (2x8GB) DDR4-3200", brand: "Corsair", price: 120, capacityGb: 16, memoryType: "DDR4" },
+  { id: "ram-32-3200-ddr4", category: "ram", name: "32GB (2x16GB) DDR4-3200", brand: "Crucial", price: 188, capacityGb: 32, memoryType: "DDR4", amazonUrl: "https://www.amazon.com/Crucial-3200MHz-PC4-25600-Downclockable-Compatible/dp/B08C4LXXCJ" },
+  { id: "ram-16-5600", category: "ram", name: "16GB (2x8GB) DDR5-5600", brand: "Corsair", price: 210, capacityGb: 16, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/CORSAIR-Vengeance-2x8GB-5600MHz-Intel/dp/B0H6G2Z2ZV" },
+  { id: "ram-32-6000", category: "ram", name: "32GB (2x16GB) DDR5-6000", brand: "Corsair", price: 370, capacityGb: 32, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/CORSAIR-VENGEANCE-6000MHz-Compatible-Computer/dp/B0BZHTVHN5" },
+  { id: "ram-32-6400", category: "ram", name: "32GB (2x16GB) DDR5-6400 CL32", brand: "G.Skill", price: 410, capacityGb: 32, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/G-Skill-Trident-PC5-51200-CL32-39-39-102-F5-6400J3239G16GA2-TZ5RK/dp/B09QS2K59B" },
+  { id: "ram-64-6000", category: "ram", name: "64GB (2x32GB) DDR5-6000", brand: "G.Skill", price: 700, capacityGb: 64, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/G-Skill-Trident-288-Pin-CL30-40-40-96-F5-6000J3040G32GX2-TZ5N/dp/B0BJP3MRW1" },
 ];
 
 // NVMe SSD prices have roughly doubled+ since late 2025 due to the same NAND shortage

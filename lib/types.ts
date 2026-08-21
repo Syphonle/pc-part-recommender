@@ -9,7 +9,7 @@ export type Category =
   | "psu"
   | "case";
 
-export type Socket = "AM5" | "LGA1851";
+export type Socket = "AM4" | "AM5" | "LGA1851";
 
 interface BasePart {
   id: string;
@@ -47,6 +47,8 @@ export interface Motherboard extends BasePart {
 export interface Ram extends BasePart {
   category: "ram";
   capacityGb: number;
+  /** AM4 boards take DDR4, AM5/LGA1851 take DDR5 — a kit can only pair with a matching platform. */
+  memoryType: "DDR4" | "DDR5";
 }
 
 export interface Storage extends BasePart {
