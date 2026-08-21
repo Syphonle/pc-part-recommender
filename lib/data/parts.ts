@@ -30,7 +30,7 @@ export const gpus: Gpu[] = [
   { id: "rx-9060xt-16g", category: "gpu", name: "Radeon RX 9060 XT 16GB", brand: "AMD", price: 470, tdp: 160, tier: 5, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-RadeonTM-Graphics-2-5-Slot-axial-tech/dp/B0F8PPT3G1" },
   { id: "rtx-4060ti-16g", category: "gpu", name: "GeForce RTX 4060 Ti 16GB", brand: "NVIDIA", price: 450, tdp: 165, tier: 5, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-Ventus-Black-Graphics/dp/B0CBK7BRL9" },
   { id: "rtx-5060ti-16g", category: "gpu", name: "GeForce RTX 5060 Ti 16GB", brand: "NVIDIA", price: 805, tdp: 180, tier: 5, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASUS-DisplayPort-2-5-Slot-Axial-tech-Technology/dp/B0F7WB6LSH" },
-  { id: "rx-7700xt", category: "gpu", name: "Radeon RX 7700 XT", brand: "AMD", price: 409, tdp: 245, tier: 6, recommendedPsuWatts: 700, amazonUrl: "https://www.amazon.com/SAPPHIRE-PULSE-RADEON-GAMING-GDDR6-VIDEO/dp/B0CGLYMRFX" },
+  { id: "rx-7700xt", category: "gpu", name: "Radeon RX 7700 XT", brand: "AMD", price: 409, tdp: 245, tier: 5, recommendedPsuWatts: 700, amazonUrl: "https://www.amazon.com/SAPPHIRE-PULSE-RADEON-GAMING-GDDR6-VIDEO/dp/B0CGLYMRFX" },
   { id: "rtx-4070", category: "gpu", name: "GeForce RTX 4070", brand: "NVIDIA", price: 520, tdp: 200, tier: 6, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4070-Founders-Graphics/dp/B0C3SPXZJ8" },
   { id: "rtx-5070", category: "gpu", name: "GeForce RTX 5070", brand: "NVIDIA", price: 900, tdp: 220, tier: 6, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-GDDR7-Graphics-Graphite/dp/B0F7XHBT13" },
   { id: "rx-9070", category: "gpu", name: "Radeon RX 9070", brand: "AMD", price: 820, tdp: 220, tier: 7, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/GIGABYTE-Radeon-Graphics-GV-R9070GAMING-OC-16GD/dp/B0DS2QZC9P" },
@@ -42,12 +42,13 @@ export const gpus: Gpu[] = [
 ];
 
 export const cpus: Cpu[] = [
-  // AM4 (paired with DDR4, not DDR5) — Ryzen 5000/4000 series stuck around specifically
-  // because it's the budget lever: an AM4 CPU + motherboard + DDR4 kit is dramatically
-  // cheaper than any AM5/LGA1851 combination, especially with DDR5 prices where they are.
-  { id: "ryzen-5-4500", category: "cpu", name: "Ryzen 5 4500", brand: "AMD", price: 90, socket: "AM4", tdp: 65, tier: 2, amazonUrl: "https://www.amazon.com/AMD-4500-12-Thread-Unlocked-Processor/dp/B09VCJN7HZ" },
-  { id: "ryzen-5-5500", category: "cpu", name: "Ryzen 5 5500", brand: "AMD", price: 190, socket: "AM4", tdp: 65, tier: 3, amazonUrl: "https://www.amazon.com/AMD-5500-12-Thread-Unlocked-Processor/dp/B09VCJ171S" },
-  { id: "ryzen-5-5600", category: "cpu", name: "Ryzen 5 5600", brand: "AMD", price: 140, socket: "AM4", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/AMD-5600-12-Thread-Unlocked-Processor/dp/B09VCHR1VH" },
+  // AM4 (paired with DDR4, not DDR5) — Ryzen 5000 series stuck around specifically because
+  // it's the budget lever: an AM4 CPU + motherboard + DDR4 kit is dramatically cheaper than
+  // any AM5/LGA1851 combination, especially with DDR5 prices where they are. 5500 is the
+  // floor (weakest/cheapest); 5600 has 2x the L3 cache and a higher boost clock for a modest
+  // step up — both keep their real relative pricing (5600 costs more than 5500).
+  { id: "ryzen-5-5500", category: "cpu", name: "Ryzen 5 5500", brand: "AMD", price: 95, socket: "AM4", tdp: 65, tier: 2, amazonUrl: "https://www.amazon.com/AMD-5500-12-Thread-Unlocked-Processor/dp/B09VCJ171S" },
+  { id: "ryzen-5-5600", category: "cpu", name: "Ryzen 5 5600", brand: "AMD", price: 120, socket: "AM4", tdp: 65, tier: 3, amazonUrl: "https://www.amazon.com/AMD-5600-12-Thread-Unlocked-Processor/dp/B09VCHR1VH" },
   { id: "ryzen-7-5700x", category: "cpu", name: "Ryzen 7 5700X", brand: "AMD", price: 200, socket: "AM4", tdp: 65, tier: 5 },
   // 3D V-Cache makes this punch well above its (older) generation specifically for gaming —
   // AMD relaunched it as a "10th Anniversary Edition" in mid-2026 at this official price,
