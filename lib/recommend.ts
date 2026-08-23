@@ -17,6 +17,24 @@ import { localPartsProvider, type PartsProvider } from "./data/provider";
 import { memoryTypeForSocket, PSU_HEADROOM_WATTS } from "./compatibility";
 
 /**
+ * "da rulez" — explicit build-philosophy rules layered on top of the value-driven logic below,
+ * agreed with the user and meant to persist/be extended over time. Each one below documents
+ * where it's actually enforced so future changes don't accidentally drop it.
+ *
+ * 1. Budget-tier GPUs (tier <= RULE_BUDGET_GPU_TIER_MAX) must be Intel — Arc cards are the
+ *    value leaders at the entry level, so non-Intel options in that tier band are excluded
+ *    from the whole GPU pool up front (see the `gpus` filter in recommendBuild). Only the
+ *    auto-recommender is restricted — the manual builder still lists every brand, since
+ *    letting someone pick anything is the point of that page.
+ * 2. Never settle for 16GB DDR5 when 32GB DDR4 is the alternative — 32GB genuinely beats 16GB
+ *    for real-world experience even though DDR5 is nominally faster than DDR4. Enforced in
+ *    `ramForMemoryType`: crossing from DDR4 to DDR5 has to land on the 32GB floor, not just
+ *    whatever capacity the build already had — so an AM4→AM5 platform crossover only goes
+ *    through if it can afford to keep 32GB, otherwise the build stays on AM4.
+ */
+const RULE_BUDGET_GPU_TIER_MAX = 3;
+
+/**
  * How much of the GPU's own relative strength (gamingIndex, 0-100 vs the fastest GPU) the
  * CPU's gamingIndex (0-100 vs the fastest *gaming* CPU — a different, more compressed scale,
  * not directly commensurate with the GPU one) must clear to avoid bottlenecking it. CPU
@@ -70,6 +88,16 @@ function bestAffordable<T extends { price: number }>(parts: T[], budget: number)
 function cheapestMeeting<T extends { price: number }>(parts: T[], predicate: (p: T) => boolean): T {
   const meeting = parts.filter(predicate);
   return cheapest(meeting.length > 0 ? meeting : parts);
+}
+
+/** da rulez #2 — see the block above. Same memory type just preserves whatever capacity the build already has; crossing into DDR5 has to clear the 32GB floor. */
+function ramForMemoryType(currentRam: Ram, requiredMemoryType: "DDR4" | "DDR5", rams: Ram[]): Ram {
+  if (currentRam.memoryType === requiredMemoryType) return currentRam;
+  const minCapacityGb = requiredMemoryType === "DDR5" ? RAM_UPGRADE_TARGET_GB : currentRam.capacityGb;
+  return cheapestMeeting(
+    rams.filter((r) => r.memoryType === requiredMemoryType),
+    (r) => r.capacityGb >= minCapacityGb
+  );
 }
 
 /**
@@ -141,14 +169,7 @@ function upgradeBuildWithLeftoverBudget(
             );
       if (candidatePsu.wattage < requiredWattage) continue; // catalog has no PSU strong enough
 
-      const requiredMemoryType = memoryTypeForSocket[candidate.socket];
-      const candidateRam =
-        ram.memoryType === requiredMemoryType
-          ? ram
-          : cheapestMeeting(
-              rams.filter((r) => r.memoryType === requiredMemoryType),
-              (r) => r.capacityGb >= ram.capacityGb
-            );
+      const candidateRam = ramForMemoryType(ram, memoryTypeForSocket[candidate.socket], rams);
 
       const delta =
         candidate.price -
@@ -285,14 +306,7 @@ function upgradeGpuWithLeftoverBudget(
             );
       if (candidatePsu.wattage < requiredWattage) continue; // catalog has no PSU strong enough
 
-      const requiredMemoryType = memoryTypeForSocket[candidateCpu.socket];
-      const candidateRam =
-        ram.memoryType === requiredMemoryType
-          ? ram
-          : cheapestMeeting(
-              rams.filter((r) => r.memoryType === requiredMemoryType),
-              (r) => r.capacityGb >= ram.capacityGb
-            );
+      const candidateRam = ramForMemoryType(ram, memoryTypeForSocket[candidateCpu.socket], rams);
 
       const delta =
         candidate.price -
@@ -331,7 +345,10 @@ export function recommendBuild(
   provider: PartsProvider = localPartsProvider
 ): BuildResult {
   const { budget, resolution, games: targets } = request;
-  const gpus = provider.getGpus();
+  // da rulez #1 — see the block above. Non-Intel cards are excluded from the budget tier band
+  // entirely, so every downstream pick (initial, and the leftover-budget upgrade pass) only
+  // ever sees Intel there; tiers above the cutoff are unaffected.
+  const gpus = provider.getGpus().filter((g) => g.tier > RULE_BUDGET_GPU_TIER_MAX || g.brand === "Intel");
   const cpus = provider.getCpus();
   const coolers = provider.getCoolers();
   const motherboards = provider.getMotherboards();
