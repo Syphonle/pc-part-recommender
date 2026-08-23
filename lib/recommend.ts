@@ -167,6 +167,120 @@ function upgradeBuildWithLeftoverBudget(
   return { cpu, motherboard, psu, ram, remaining };
 }
 
+/**
+ * Spend leftover budget on a better GPU before anything else gets a claim on it — the GPU is
+ * the primary lever for both predicted FPS and real headroom, and it's the thing that was
+ * previously getting starved: once an FPS target was met cheaply, all remaining budget flowed
+ * into CPU/motherboard/RAM (an upgrade that doesn't even show up in the FPS numbers) instead
+ * of into the GPU (which does). If a stronger GPU would introduce a new CPU bottleneck, the
+ * cheapest CPU (and, if needed, motherboard/RAM) that avoids it is bundled into the same
+ * step's cost as a requirement, not an option — this never takes a step that leaves the build
+ * internally inconsistent.
+ */
+function upgradeGpuWithLeftoverBudget(
+  startGpu: Gpu,
+  startCpu: Cpu,
+  startMotherboard: Motherboard,
+  startPsu: Psu,
+  startRam: Ram,
+  resolution: Resolution,
+  gpus: Gpu[],
+  cpus: Cpu[],
+  motherboards: Motherboard[],
+  psus: Psu[],
+  rams: Ram[],
+  startRemaining: number
+): { gpu: Gpu; cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
+  let gpu = startGpu;
+  let cpu = startCpu;
+  let motherboard = startMotherboard;
+  let psu = startPsu;
+  let ram = startRam;
+  let remaining = startRemaining;
+
+  while (true) {
+    let best: {
+      gpu: Gpu;
+      cpu: Cpu;
+      motherboard: Motherboard;
+      psu: Psu;
+      ram: Ram;
+      delta: number;
+    } | null = null;
+
+    for (const candidate of gpus) {
+      if (candidate.gamingIndex <= gpu.gamingIndex) continue;
+
+      // A stronger GPU raises the bar for what counts as "not bottlenecking" — if the current
+      // CPU no longer clears it, swapping to the cheapest one that does is mandatory here,
+      // same as the original bottleneck check, not a nice-to-have.
+      const requiredCpuIndex = candidate.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution];
+      const candidateCpu =
+        cpu.gamingIndex >= requiredCpuIndex ? cpu : cheapestMeeting(cpus, (c) => c.gamingIndex >= requiredCpuIndex);
+
+      const requiredMoboTier = candidateCpu.tier - MOBO_TIER_SLACK;
+      const candidateMobo =
+        motherboard.socket === candidateCpu.socket && motherboard.tier >= requiredMoboTier
+          ? motherboard
+          : cheapestMeeting(
+              motherboards.filter((m) => m.socket === candidateCpu.socket),
+              (m) => m.tier >= requiredMoboTier
+            );
+      if (candidateMobo.tier < requiredMoboTier) continue; // catalog has no board strong enough
+
+      const requiredWattage = Math.max(
+        candidate.recommendedPsuWatts,
+        candidate.tdp + candidateCpu.tdp + PSU_HEADROOM_WATTS
+      );
+      const requiredPsuTier = candidate.tier - PSU_TIER_SLACK;
+      const candidatePsu =
+        psu.wattage >= requiredWattage && psu.tier >= requiredPsuTier
+          ? psu
+          : cheapestMeeting(
+              psus.filter((p) => p.wattage >= requiredWattage),
+              (p) => p.tier >= requiredPsuTier
+            );
+      if (candidatePsu.wattage < requiredWattage) continue; // catalog has no PSU strong enough
+
+      const requiredMemoryType = memoryTypeForSocket[candidateCpu.socket];
+      const candidateRam =
+        ram.memoryType === requiredMemoryType
+          ? ram
+          : cheapestMeeting(
+              rams.filter((r) => r.memoryType === requiredMemoryType),
+              (r) => r.capacityGb >= ram.capacityGb
+            );
+
+      const delta =
+        candidate.price -
+        gpu.price +
+        (candidateCpu.price - cpu.price) +
+        (candidateMobo.price - motherboard.price) +
+        (candidatePsu.price - psu.price) +
+        (candidateRam.price - ram.price);
+      if (delta > remaining) continue;
+
+      if (
+        !best ||
+        candidate.gamingIndex > best.gpu.gamingIndex ||
+        (candidate.gamingIndex === best.gpu.gamingIndex && delta < best.delta)
+      ) {
+        best = { gpu: candidate, cpu: candidateCpu, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
+      }
+    }
+
+    if (!best) break;
+    remaining -= best.delta;
+    gpu = best.gpu;
+    cpu = best.cpu;
+    motherboard = best.motherboard;
+    psu = best.psu;
+    ram = best.ram;
+  }
+
+  return { gpu, cpu, motherboard, psu, ram, remaining };
+}
+
 export function recommendBuild(
   request: BuildRequest,
   provider: PartsProvider = localPartsProvider
@@ -213,7 +327,7 @@ export function recommendBuild(
 
   const affordableGpus = gpus.filter((g) => g.price <= gpuCeiling).sort((a, b) => a.price - b.price);
   const qualifying = affordableGpus.filter(meetsAllTargets);
-  const gpu: Gpu =
+  let gpu: Gpu =
     qualifying.length > 0
       ? qualifying[0]
       : [...affordableGpus].sort((a, b) => b.tier - a.tier)[0];
@@ -269,11 +383,28 @@ export function recommendBuild(
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
   remaining -= storage.price;
 
-  // Real leftover budget goes toward a CPU (and, if needed, motherboard/PSU/RAM) upgrade
-  // before anything else — more genuine value than a nicer case, and the whole reason this
-  // step exists is to not leave money on the table when e.g. a 5500 build could stretch to a
-  // 5600, or a huge budget could stretch all the way to an AM5 X3D chip on a board that can
-  // drive it, even though the build started out on AM4.
+  // GPU gets first claim on leftover budget — it's what actually moves the FPS numbers and
+  // gives real headroom, unlike a CPU/platform upgrade the game may not even need. Any CPU
+  // bottleneck a stronger GPU would introduce is fixed as part of the same step.
+  ({ gpu, cpu, motherboard, psu, ram, remaining } = upgradeGpuWithLeftoverBudget(
+    gpu,
+    cpu,
+    motherboard,
+    psu,
+    ram,
+    resolution,
+    gpus,
+    cpus,
+    motherboards,
+    psus,
+    rams,
+    remaining
+  ));
+
+  // Only after the GPU is maxed out does leftover go toward a further CPU/platform upgrade —
+  // more genuine value than a nicer case, and the whole reason this step exists is to not
+  // leave money on the table when e.g. a 5500 build could stretch to a 5600, or stretch all
+  // the way to an AM5 X3D chip on a board that can drive it, even starting out on AM4.
   ({ cpu, motherboard, psu, ram, remaining } = upgradeBuildWithLeftoverBudget(
     cpu,
     motherboard,
