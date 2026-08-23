@@ -1,7 +1,7 @@
-import type { Benchmark, Case, Cpu, Game, Gpu, Motherboard, Psu, Ram, Storage } from "../types";
+import type { Benchmark, Case, Cooler, Cpu, Game, Gpu, Motherboard, Psu, Ram, Storage } from "../types";
 import { benchmarks } from "./benchmarks";
 import { games } from "./games";
-import { cases, cpus, gpus, motherboards, psus, rams, storages } from "./parts";
+import { cases, coolers, cpus, gpus, motherboards, psus, rams, storages } from "./parts";
 
 /**
  * Everything the recommendation engine needs about parts, prices, and benchmarks.
@@ -12,6 +12,7 @@ import { cases, cpus, gpus, motherboards, psus, rams, storages } from "./parts";
 export interface PartsProvider {
   getGpus(): Gpu[];
   getCpus(): Cpu[];
+  getCoolers(): Cooler[];
   getMotherboards(): Motherboard[];
   getRams(): Ram[];
   getStorages(): Storage[];
@@ -24,6 +25,7 @@ export interface PartsProvider {
 export const localPartsProvider: PartsProvider = {
   getGpus: () => gpus,
   getCpus: () => cpus,
+  getCoolers: () => coolers,
   getMotherboards: () => motherboards,
   getRams: () => rams,
   getStorages: () => storages,

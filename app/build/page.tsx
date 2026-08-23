@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { GameSelector } from "@/components/GameSelector";
 import { FpsBar } from "@/components/FpsBar";
 import { PartRow } from "@/components/PartRow";
-import { gpus, cpus, motherboards, rams, storages, psus, cases } from "@/lib/data/parts";
+import { gpus, cpus, coolers, motherboards, rams, storages, psus, cases } from "@/lib/data/parts";
 import { games as gameList } from "@/lib/data/games";
 import { benchmarks } from "@/lib/data/benchmarks";
-import { checkBuildCompatibility, memoryTypeForSocket, PSU_HEADROOM_WATTS } from "@/lib/compatibility";
+import { CATEGORY_ORDER, categoryLabels } from "@/lib/data/categoryMeta";
+import { checkBuildCompatibility } from "@/lib/compatibility";
 import { benchmarkLookup } from "@/lib/recommend";
-import type { GameTarget, Part, Resolution } from "@/lib/types";
+import { useBuildDraft } from "@/lib/useBuildDraft";
+import type { BuildDraft } from "@/lib/buildDraft";
+import type { Category, GameTarget, Part, Resolution } from "@/lib/types";
 
 const resolutions: { value: Resolution; label: string }[] = [
   { value: "1080p", label: "1080p" },
@@ -21,113 +24,68 @@ const resolutions: { value: Resolution; label: string }[] = [
 const gameNames = new Map(gameList.map((g) => [g.id, g.name]));
 const lookupFps = benchmarkLookup(benchmarks);
 
-function CategoryPicker<T extends { id: string; name: string; price: number }>({
-  label,
-  parts,
-  totalCount,
-  selectedId,
-  onChange,
-}: {
-  label: string;
-  parts: T[];
-  /** Full unfiltered size of this category, used only to show "N of M available" once other picks have narrowed it down. */
-  totalCount?: number;
-  selectedId: string | null;
-  onChange: (id: string | null) => void;
-}) {
-  const sorted = [...parts].sort((a, b) => a.price - b.price);
-  const isFiltered = totalCount !== undefined && parts.length < totalCount;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
-        {label}
-      </label>
-      <select
-        value={selectedId ?? ""}
-        onChange={(e) => onChange(e.target.value || null)}
-        className="rounded border px-3 py-2 text-sm"
-        style={{
-          borderColor: "var(--viz-baseline)",
-          color: "var(--viz-text-primary)",
-          backgroundColor: "var(--background)",
-        }}
-      >
-        <option value="">— Not selected —</option>
-        {sorted.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name} — ${p.price}
-          </option>
-        ))}
-      </select>
-      {isFiltered && (
-        <span className="text-xs" style={{ color: "var(--viz-text-muted)" }}>
-          Showing {parts.length} of {totalCount} — narrowed by your other picks.
-        </span>
-      )}
-    </div>
-  );
+const draftKeyByCategory: Record<Category, keyof BuildDraft> = {
+  gpu: "gpuId",
+  cpu: "cpuId",
+  cooler: "coolerId",
+  motherboard: "motherboardId",
+  ram: "ramId",
+  storage: "storageId",
+  psu: "psuId",
+  case: "caseId",
+};
+
+function findById<T extends { id: string }>(parts: T[], id: string | null): T | undefined {
+  return id ? parts.find((p) => p.id === id) : undefined;
 }
 
 export default function BuildYourOwn() {
-  const [gpuId, setGpuId] = useState<string | null>(null);
-  const [cpuId, setCpuId] = useState<string | null>(null);
-  const [motherboardId, setMotherboardId] = useState<string | null>(null);
-  const [ramId, setRamId] = useState<string | null>(null);
-  const [storageId, setStorageId] = useState<string | null>(null);
-  const [psuId, setPsuId] = useState<string | null>(null);
-  const [caseId, setCaseId] = useState<string | null>(null);
-  const [resolution, setResolution] = useState<Resolution>("1440p");
-  const [games, setGames] = useState<GameTarget[]>([]);
+  const { draft, setDraft } = useBuildDraft();
 
-  const gpu = gpus.find((g) => g.id === gpuId);
-  const cpu = cpus.find((c) => c.id === cpuId);
-  const motherboard = motherboards.find((m) => m.id === motherboardId);
-  const ram = rams.find((r) => r.id === ramId);
-  const storage = storages.find((s) => s.id === storageId);
-  const psu = psus.find((p) => p.id === psuId);
-  const pcCase = cases.find((c) => c.id === caseId);
+  const gpu = findById(gpus, draft.gpuId);
+  const cpu = findById(cpus, draft.cpuId);
+  const cooler = findById(coolers, draft.coolerId);
+  const motherboard = findById(motherboards, draft.motherboardId);
+  const ram = findById(rams, draft.ramId);
+  const storage = findById(storages, draft.storageId);
+  const psu = findById(psus, draft.psuId);
+  const pcCase = findById(cases, draft.caseId);
 
-  const selectedParts: Part[] = [gpu, cpu, motherboard, ram, storage, psu, pcCase].filter(
+  const partByCategory: Record<Category, Part | undefined> = {
+    gpu,
+    cpu,
+    cooler,
+    motherboard,
+    ram,
+    storage,
+    psu,
+    case: pcCase,
+  };
+
+  const selectedParts: Part[] = [gpu, cpu, cooler, motherboard, ram, storage, psu, pcCase].filter(
     (p): p is Part => p !== undefined
   );
   const totalPrice = selectedParts.reduce((sum, p) => sum + p.price, 0);
-  const issues = checkBuildCompatibility({ gpu, cpu, motherboard, ram, psu });
+  const issues = checkBuildCompatibility({ gpu, cpu, cooler, motherboard, ram, psu });
 
-  // Proactively hide options that couldn't possibly work with what's already picked, rather
-  // than letting an incompatible pick happen and only flagging it afterward. Each list only
-  // looks at the *other* categories, so picking any part in either order lands on the same
-  // set of choices — pick a 5600 first and B850/DDR5 disappear from their pickers; pick a
-  // B850 first and AM4 CPUs disappear from theirs.
-  const cpuOptions = cpus.filter((c) => {
-    if (motherboard && c.socket !== motherboard.socket) return false;
-    if (ram && memoryTypeForSocket[c.socket] !== ram.memoryType) return false;
-    return true;
-  });
-  const motherboardOptions = motherboards.filter((m) => {
-    if (cpu && m.socket !== cpu.socket) return false;
-    if (ram && memoryTypeForSocket[m.socket] !== ram.memoryType) return false;
-    return true;
-  });
-  const ramOptions = rams.filter((r) => {
-    if (cpu && r.memoryType !== memoryTypeForSocket[cpu.socket]) return false;
-    if (motherboard && r.memoryType !== memoryTypeForSocket[motherboard.socket]) return false;
-    return true;
-  });
-  const psuOptions = psus.filter((p) => {
-    if (gpu && cpu) {
-      const required = Math.max(gpu.recommendedPsuWatts, gpu.tdp + cpu.tdp + PSU_HEADROOM_WATTS);
-      return p.wattage >= required;
-    }
-    if (gpu) return p.wattage >= gpu.recommendedPsuWatts;
-    return true;
-  });
+  function clearPart(category: Category) {
+    setDraft((d) => ({ ...d, [draftKeyByCategory[category]]: null }));
+  }
+
+  function setResolution(resolution: Resolution) {
+    setDraft((d) => ({ ...d, resolution }));
+  }
+
+  function setGames(games: GameTarget[]) {
+    setDraft((d) => ({ ...d, games }));
+  }
 
   return (
     <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
         <SiteHeader
           title="Build your own"
-          description="Pick each part yourself. Compatibility gets checked as you go, and an FPS preview shows up once you've picked a GPU and some games."
+          description="Tap a category to browse and filter its options. Compatibility gets checked as you go, and an FPS preview shows up once you've picked a GPU and some games."
         />
 
         <div
@@ -148,27 +106,46 @@ export default function BuildYourOwn() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 border-t p-6 sm:grid-cols-2" style={{ borderColor: "var(--surface-border)" }}>
-            <CategoryPicker label="Graphics Card" parts={gpus} selectedId={gpuId} onChange={setGpuId} />
-            <CategoryPicker label="Processor" parts={cpuOptions} totalCount={cpus.length} selectedId={cpuId} onChange={setCpuId} />
-            <CategoryPicker
-              label="Motherboard"
-              parts={motherboardOptions}
-              totalCount={motherboards.length}
-              selectedId={motherboardId}
-              onChange={setMotherboardId}
-            />
-            <CategoryPicker label="Memory" parts={ramOptions} totalCount={rams.length} selectedId={ramId} onChange={setRamId} />
-            <CategoryPicker label="Storage" parts={storages} selectedId={storageId} onChange={setStorageId} />
-            <CategoryPicker label="Power Supply" parts={psuOptions} totalCount={psus.length} selectedId={psuId} onChange={setPsuId} />
-            <CategoryPicker label="Case" parts={cases} selectedId={caseId} onChange={setCaseId} />
+          <div className="flex flex-col border-t" style={{ borderColor: "var(--surface-border)" }}>
+            {CATEGORY_ORDER.map((category, i) => {
+              const part = partByCategory[category];
+              return (
+                <div
+                  key={category}
+                  className={`flex items-center justify-between gap-3 p-4 ${i === 0 ? "" : "border-t"}`}
+                  style={{ borderColor: "var(--surface-border)" }}
+                >
+                  <Link href={`/build/${category}/`} className="flex flex-1 flex-col gap-0.5 group">
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                      {categoryLabels[category]}
+                    </span>
+                    {part ? (
+                      <span className="text-sm font-medium group-hover:underline" style={{ color: "var(--viz-text-primary)" }}>
+                        {part.name} — ${part.price}
+                      </span>
+                    ) : (
+                      <span className="text-sm group-hover:underline" style={{ color: "var(--accent)" }}>
+                        Not selected — tap to choose
+                      </span>
+                    )}
+                  </Link>
+                  {part && (
+                    <button
+                      type="button"
+                      onClick={() => clearPart(category)}
+                      className="rounded border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-[var(--viz-gridline)]"
+                      style={{ borderColor: "var(--viz-baseline)", color: "var(--viz-text-secondary)" }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {issues.length > 0 && (
-            <section
-              className="flex flex-col gap-2 border-t p-6"
-              style={{ borderColor: "var(--surface-border)" }}
-            >
+            <section className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
               <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-critical)" }}>
                 Compatibility
               </h3>
@@ -228,14 +205,14 @@ export default function BuildYourOwn() {
                   key={r.value}
                   type="button"
                   onClick={() => setResolution(r.value)}
-                  aria-pressed={resolution === r.value}
+                  aria-pressed={draft.resolution === r.value}
                   className={`px-4 py-1.5 text-sm font-medium transition-colors ${
                     i > 0 ? "border-l" : ""
-                  } ${resolution === r.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
+                  } ${draft.resolution === r.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
                   style={{
                     borderColor: "var(--viz-baseline)",
-                    backgroundColor: resolution === r.value ? "var(--accent)" : "transparent",
-                    color: resolution === r.value ? "var(--accent-contrast)" : "var(--viz-text-primary)",
+                    backgroundColor: draft.resolution === r.value ? "var(--accent)" : "transparent",
+                    color: draft.resolution === r.value ? "var(--accent-contrast)" : "var(--viz-text-primary)",
                   }}
                 >
                   {r.label}
@@ -248,17 +225,17 @@ export default function BuildYourOwn() {
             <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
               Games (optional — for the FPS preview)
             </span>
-            <GameSelector selected={games} onChange={setGames} />
+            <GameSelector selected={draft.games} onChange={setGames} />
           </div>
 
-          {gpu && games.length > 0 && (
+          {gpu && draft.games.length > 0 && (
             <section className="flex flex-col gap-4 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
               <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                 Predicted FPS with {gpu.name}
               </h3>
               <div className="flex flex-col gap-4">
-                {games.map((t) => {
-                  const predictedFps = lookupFps(gpu.id, t.gameId, resolution) ?? 0;
+                {draft.games.map((t) => {
+                  const predictedFps = lookupFps(gpu.id, t.gameId, draft.resolution) ?? 0;
                   return (
                     <FpsBar
                       key={t.gameId}

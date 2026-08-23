@@ -3,6 +3,7 @@ export type Resolution = "1080p" | "1440p" | "4k";
 export type Category =
   | "gpu"
   | "cpu"
+  | "cooler"
   | "motherboard"
   | "ram"
   | "storage"
@@ -41,6 +42,15 @@ export interface Cpu extends BasePart {
   gamingIndex: number;
 }
 
+export interface Cooler extends BasePart {
+  category: "cooler";
+  /** Modern coolers ship with brackets/adapters for every current socket, so this is rarely a real constraint, but it's modeled for correctness. */
+  sockets: Socket[];
+  coolerType: "air" | "aio";
+  /** Manufacturer-rated max CPU TDP this cooler can handle without thermal throttling. */
+  tdpRating: number;
+}
+
 export interface Motherboard extends BasePart {
   category: "motherboard";
   socket: Socket;
@@ -53,6 +63,9 @@ export interface Ram extends BasePart {
   capacityGb: number;
   /** AM4 boards take DDR4, AM5/LGA1851 take DDR5 — a kit can only pair with a matching platform. */
   memoryType: "DDR4" | "DDR5";
+  /** Number of sticks in the kit, e.g. 2 for a 2x16GB kit — capacityGb / modules gives the per-stick size. */
+  modules: number;
+  speedMhz: number;
 }
 
 export interface Storage extends BasePart {
@@ -65,13 +78,14 @@ export interface Psu extends BasePart {
   wattage: number;
   /** Build-quality tier on the same rough 1 (entry) - 10 (flagship) scale as Gpu.tier (efficiency rating, brand, headroom), used so the PSU doesn't undersell the rest of the build. */
   tier: number;
+  efficiency: "Bronze" | "Gold" | "Platinum";
 }
 
 export interface Case extends BasePart {
   category: "case";
 }
 
-export type Part = Gpu | Cpu | Motherboard | Ram | Storage | Psu | Case;
+export type Part = Gpu | Cpu | Cooler | Motherboard | Ram | Storage | Psu | Case;
 
 export interface Game {
   id: string;

@@ -2,6 +2,7 @@ import type {
   Benchmark,
   BuildRequest,
   BuildResult,
+  Cooler,
   Cpu,
   GameResult,
   Gpu,
@@ -82,27 +83,39 @@ function cheapestMeeting<T extends { price: number }>(parts: T[], predicate: (p:
  */
 function upgradeBuildWithLeftoverBudget(
   startCpu: Cpu,
+  startCooler: Cooler,
   startMotherboard: Motherboard,
   startPsu: Psu,
   startRam: Ram,
   gpu: Gpu,
   cpus: Cpu[],
+  coolers: Cooler[],
   motherboards: Motherboard[],
   psus: Psu[],
   rams: Ram[],
   startRemaining: number
-): { cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
+): { cpu: Cpu; cooler: Cooler; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
   let cpu = startCpu;
+  let cooler = startCooler;
   let motherboard = startMotherboard;
   let psu = startPsu;
   let ram = startRam;
   let remaining = startRemaining;
 
   while (true) {
-    let best: { cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; delta: number } | null = null;
+    let best: { cpu: Cpu; cooler: Cooler; motherboard: Motherboard; psu: Psu; ram: Ram; delta: number } | null = null;
 
     for (const candidate of cpus) {
       if (candidate.gamingIndex <= cpu.gamingIndex) continue;
+
+      const candidateCooler =
+        cooler.sockets.includes(candidate.socket) && cooler.tdpRating >= candidate.tdp
+          ? cooler
+          : cheapestMeeting(
+              coolers.filter((c) => c.sockets.includes(candidate.socket)),
+              (c) => c.tdpRating >= candidate.tdp
+            );
+      if (candidateCooler.tdpRating < candidate.tdp) continue; // catalog has no cooler strong enough
 
       const requiredMoboTier = candidate.tier - MOBO_TIER_SLACK;
       const candidateMobo =
@@ -137,25 +150,27 @@ function upgradeBuildWithLeftoverBudget(
       const delta =
         candidate.price -
         cpu.price +
+        (candidateCooler.price - cooler.price) +
         (candidateMobo.price - motherboard.price) +
         (candidatePsu.price - psu.price) +
         (candidateRam.price - ram.price);
       if (delta > remaining) continue;
 
       if (!best || candidate.gamingIndex > best.cpu.gamingIndex || (candidate.gamingIndex === best.cpu.gamingIndex && delta < best.delta)) {
-        best = { cpu: candidate, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
+        best = { cpu: candidate, cooler: candidateCooler, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
       }
     }
 
     if (!best) break;
     remaining -= best.delta;
     cpu = best.cpu;
+    cooler = best.cooler;
     motherboard = best.motherboard;
     psu = best.psu;
     ram = best.ram;
   }
 
-  return { cpu, motherboard, psu, ram, remaining };
+  return { cpu, cooler, motherboard, psu, ram, remaining };
 }
 
 /**
@@ -171,6 +186,7 @@ function upgradeBuildWithLeftoverBudget(
 function upgradeGpuWithLeftoverBudget(
   startGpu: Gpu,
   startCpu: Cpu,
+  startCooler: Cooler,
   startMotherboard: Motherboard,
   startPsu: Psu,
   startRam: Ram,
@@ -178,13 +194,15 @@ function upgradeGpuWithLeftoverBudget(
   cpuSensitivityMultiplier: number,
   gpus: Gpu[],
   cpus: Cpu[],
+  coolers: Cooler[],
   motherboards: Motherboard[],
   psus: Psu[],
   rams: Ram[],
   startRemaining: number
-): { gpu: Gpu; cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
+): { gpu: Gpu; cpu: Cpu; cooler: Cooler; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
   let gpu = startGpu;
   let cpu = startCpu;
+  let cooler = startCooler;
   let motherboard = startMotherboard;
   let psu = startPsu;
   let ram = startRam;
@@ -194,6 +212,7 @@ function upgradeGpuWithLeftoverBudget(
     let best: {
       gpu: Gpu;
       cpu: Cpu;
+      cooler: Cooler;
       motherboard: Motherboard;
       psu: Psu;
       ram: Ram;
@@ -209,6 +228,15 @@ function upgradeGpuWithLeftoverBudget(
       const requiredCpuIndex = candidate.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution] * cpuSensitivityMultiplier;
       const candidateCpu =
         cpu.gamingIndex >= requiredCpuIndex ? cpu : cheapestMeeting(cpus, (c) => c.gamingIndex >= requiredCpuIndex);
+
+      const candidateCooler =
+        cooler.sockets.includes(candidateCpu.socket) && cooler.tdpRating >= candidateCpu.tdp
+          ? cooler
+          : cheapestMeeting(
+              coolers.filter((c) => c.sockets.includes(candidateCpu.socket)),
+              (c) => c.tdpRating >= candidateCpu.tdp
+            );
+      if (candidateCooler.tdpRating < candidateCpu.tdp) continue; // catalog has no cooler strong enough
 
       const requiredMoboTier = candidateCpu.tier - MOBO_TIER_SLACK;
       const candidateMobo =
@@ -247,6 +275,7 @@ function upgradeGpuWithLeftoverBudget(
         candidate.price -
         gpu.price +
         (candidateCpu.price - cpu.price) +
+        (candidateCooler.price - cooler.price) +
         (candidateMobo.price - motherboard.price) +
         (candidatePsu.price - psu.price) +
         (candidateRam.price - ram.price);
@@ -257,7 +286,7 @@ function upgradeGpuWithLeftoverBudget(
         candidate.gamingIndex > best.gpu.gamingIndex ||
         (candidate.gamingIndex === best.gpu.gamingIndex && delta < best.delta)
       ) {
-        best = { gpu: candidate, cpu: candidateCpu, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
+        best = { gpu: candidate, cpu: candidateCpu, cooler: candidateCooler, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
       }
     }
 
@@ -265,12 +294,13 @@ function upgradeGpuWithLeftoverBudget(
     remaining -= best.delta;
     gpu = best.gpu;
     cpu = best.cpu;
+    cooler = best.cooler;
     motherboard = best.motherboard;
     psu = best.psu;
     ram = best.ram;
   }
 
-  return { gpu, cpu, motherboard, psu, ram, remaining };
+  return { gpu, cpu, cooler, motherboard, psu, ram, remaining };
 }
 
 export function recommendBuild(
@@ -280,6 +310,7 @@ export function recommendBuild(
   const { budget, resolution, games: targets } = request;
   const gpus = provider.getGpus();
   const cpus = provider.getCpus();
+  const coolers = provider.getCoolers();
   const motherboards = provider.getMotherboards();
   const rams = provider.getRams();
   const storages = provider.getStorages();
@@ -311,6 +342,7 @@ export function recommendBuild(
   // actually gets built below.
   const minRestFloor =
     cheapest(cpus).price +
+    cheapest(coolers).price +
     cheapest(motherboards).price +
     genericRamFloor.price +
     storageTarget.price +
@@ -344,6 +376,14 @@ export function recommendBuild(
       ? cpuCandidates[0]
       : [...cpus].sort((a, b) => b.gamingIndex - a.gamingIndex)[0];
 
+  // Cheapest cooler that's actually rated for this CPU's TDP — an insufficient cooler means
+  // real thermal throttling, not just a nice-to-have upgrade, so this is a hard requirement
+  // resolved right alongside the CPU pick, the same way the motherboard/PSU are below.
+  let cooler = cheapestMeeting(
+    coolers.filter((c) => c.sockets.includes(cpu.socket)),
+    (c) => c.tdpRating >= cpu.tdp
+  );
+
   // Meeting the CPU's floor requirement is a minimum, not a target — a bare A620M/A520M is
   // technically "adequate" for almost any CPU under the tier check, but real builds scale
   // the board with the overall budget (B550/B650/B850-class, not the rock-bottom chipset)
@@ -371,7 +411,7 @@ export function recommendBuild(
       : [...psus.filter((p) => p.wattage >= requiredWattage)].sort((a, b) => a.price - b.price)[0] ??
         [...psus].sort((a, b) => b.wattage - a.wattage)[0];
 
-  let remaining = budget - gpu.price - cpu.price - motherboard.price - psu.price;
+  let remaining = budget - gpu.price - cpu.price - cooler.price - motherboard.price - psu.price;
 
   // RAM must match the platform's memory type (DDR4 for AM4, DDR5 for AM5/LGA1851) — and
   // target a sensible capacity rather than maximizing spend, since going bigger than 32GB
@@ -386,9 +426,10 @@ export function recommendBuild(
   // GPU gets first claim on leftover budget — it's what actually moves the FPS numbers and
   // gives real headroom, unlike a CPU/platform upgrade the game may not even need. Any CPU
   // bottleneck a stronger GPU would introduce is fixed as part of the same step.
-  ({ gpu, cpu, motherboard, psu, ram, remaining } = upgradeGpuWithLeftoverBudget(
+  ({ gpu, cpu, cooler, motherboard, psu, ram, remaining } = upgradeGpuWithLeftoverBudget(
     gpu,
     cpu,
+    cooler,
     motherboard,
     psu,
     ram,
@@ -396,6 +437,7 @@ export function recommendBuild(
     cpuSensitivityMultiplier,
     gpus,
     cpus,
+    coolers,
     motherboards,
     psus,
     rams,
@@ -406,13 +448,15 @@ export function recommendBuild(
   // more genuine value than a nicer case, and the whole reason this step exists is to not
   // leave money on the table when e.g. a 5500 build could stretch to a 5600, or stretch all
   // the way to an AM5 X3D chip on a board that can drive it, even starting out on AM4.
-  ({ cpu, motherboard, psu, ram, remaining } = upgradeBuildWithLeftoverBudget(
+  ({ cpu, cooler, motherboard, psu, ram, remaining } = upgradeBuildWithLeftoverBudget(
     cpu,
+    cooler,
     motherboard,
     psu,
     ram,
     gpu,
     cpus,
+    coolers,
     motherboards,
     psus,
     rams,
@@ -424,7 +468,7 @@ export function recommendBuild(
   const pcCase = bestAffordable(cases, remaining);
   remaining -= pcCase.price;
 
-  const parts: Part[] = [gpu, cpu, motherboard, ram, storage, psu, pcCase];
+  const parts: Part[] = [gpu, cpu, cooler, motherboard, ram, storage, psu, pcCase];
   const totalPrice = parts.reduce((sum, p) => sum + p.price, 0);
 
   if (totalPrice > budget) {

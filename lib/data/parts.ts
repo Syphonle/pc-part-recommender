@@ -1,4 +1,4 @@
-import type { Case, Cpu, Gpu, Motherboard, Part, Psu, Ram, Storage } from "../types";
+import type { Case, Cooler, Cpu, Gpu, Motherboard, Part, Psu, Ram, Storage } from "../types";
 
 // Prices are manually maintained street-price estimates (USD), not live market data.
 // See lib/data/provider.ts for the swap-in point for a real pricing source.
@@ -86,6 +86,21 @@ export const cpus: Cpu[] = [
   { id: "ryzen-9-9950x3d", category: "cpu", name: "Ryzen 9 9950X3D", brand: "AMD", price: 650, socket: "AM5", tdp: 170, tier: 9, gamingIndex: 95.7, amazonUrl: "https://www.amazon.com/AMD-Ryzen-9950X3D-16-Core-Processor/dp/B0DVZSG8D5" },
 ];
 
+// All current coolers ship with mounting hardware for every current socket (AM4/AM5/LGA1851),
+// so `sockets` is rarely a real constraint — tdpRating (the actual gating factor) is what
+// keeps a 9950X3D off a $30 single-tower cooler. Prices/ratings are commodity-stable, not
+// exposed to the DRAM/NAND shortage affecting GPU/RAM/SSD pricing elsewhere in this file.
+export const coolers: Cooler[] = [
+  { id: "cooler-hyper212", category: "cooler", name: "Cooler Master Hyper 212", brand: "Cooler Master", price: 30, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "air", tdpRating: 150 },
+  { id: "cooler-peerless-assassin-120se", category: "cooler", name: "Peerless Assassin 120 SE", brand: "Thermalright", price: 40, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "air", tdpRating: 230 },
+  { id: "cooler-nh-u12s-redux", category: "cooler", name: "NH-U12S Redux", brand: "Noctua", price: 55, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "air", tdpRating: 160 },
+  { id: "cooler-dark-rock-4", category: "cooler", name: "Dark Rock 4", brand: "be quiet!", price: 80, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "air", tdpRating: 200 },
+  { id: "cooler-liquid-freezer-iii-240", category: "cooler", name: "Liquid Freezer III 240", brand: "ARCTIC", price: 65, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "aio", tdpRating: 250 },
+  { id: "cooler-nh-d15-g2", category: "cooler", name: "NH-D15 G2", brand: "Noctua", price: 160, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "air", tdpRating: 250 },
+  { id: "cooler-liquid-freezer-iii-360", category: "cooler", name: "Liquid Freezer III 360", brand: "ARCTIC", price: 105, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "aio", tdpRating: 300 },
+  { id: "cooler-titan-360-rx", category: "cooler", name: "iCUE LINK Titan 360 RX", brand: "Corsair", price: 210, sockets: ["AM4", "AM5", "LGA1851"], coolerType: "aio", tdpRating: 350 },
+];
+
 // tier reflects VRM/build quality and chipset class (A620 < B650 < B850 < X870E; B860 < Z890),
 // not just price — e.g. Intel's unlocked "K" CPUs need a Z-series board to actually overclock,
 // so B860 never qualifies as a match for a K-series chip regardless of its tier gap.
@@ -109,12 +124,12 @@ export const motherboards: Motherboard[] = [
 // too (a 32GB kit that was ~$60-90 in late 2025 is now ~$188) but is still far cheaper than
 // DDR5 — one of the reasons AM4 remains a real budget lever, not just a cheaper CPU/board.
 export const rams: Ram[] = [
-  { id: "ram-16-3200-ddr4", category: "ram", name: "16GB (2x8GB) DDR4-3200", brand: "Corsair", price: 120, capacityGb: 16, memoryType: "DDR4" },
-  { id: "ram-32-3200-ddr4", category: "ram", name: "32GB (2x16GB) DDR4-3200", brand: "Crucial", price: 188, capacityGb: 32, memoryType: "DDR4", amazonUrl: "https://www.amazon.com/Crucial-3200MHz-PC4-25600-Downclockable-Compatible/dp/B08C4LXXCJ" },
-  { id: "ram-16-5600", category: "ram", name: "16GB (2x8GB) DDR5-5600", brand: "Corsair", price: 210, capacityGb: 16, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/CORSAIR-Vengeance-2x8GB-5600MHz-Intel/dp/B0H6G2Z2ZV" },
-  { id: "ram-32-6000", category: "ram", name: "32GB (2x16GB) DDR5-6000", brand: "Corsair", price: 370, capacityGb: 32, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/CORSAIR-VENGEANCE-6000MHz-Compatible-Computer/dp/B0BZHTVHN5" },
-  { id: "ram-32-6400", category: "ram", name: "32GB (2x16GB) DDR5-6400 CL32", brand: "G.Skill", price: 410, capacityGb: 32, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/G-Skill-Trident-PC5-51200-CL32-39-39-102-F5-6400J3239G16GA2-TZ5RK/dp/B09QS2K59B" },
-  { id: "ram-64-6000", category: "ram", name: "64GB (2x32GB) DDR5-6000", brand: "G.Skill", price: 700, capacityGb: 64, memoryType: "DDR5", amazonUrl: "https://www.amazon.com/G-Skill-Trident-288-Pin-CL30-40-40-96-F5-6000J3040G32GX2-TZ5N/dp/B0BJP3MRW1" },
+  { id: "ram-16-3200-ddr4", category: "ram", name: "16GB (2x8GB) DDR4-3200", brand: "Corsair", price: 120, capacityGb: 16, memoryType: "DDR4", modules: 2, speedMhz: 3200 },
+  { id: "ram-32-3200-ddr4", category: "ram", name: "32GB (2x16GB) DDR4-3200", brand: "Crucial", price: 188, capacityGb: 32, memoryType: "DDR4", modules: 2, speedMhz: 3200, amazonUrl: "https://www.amazon.com/Crucial-3200MHz-PC4-25600-Downclockable-Compatible/dp/B08C4LXXCJ" },
+  { id: "ram-16-5600", category: "ram", name: "16GB (2x8GB) DDR5-5600", brand: "Corsair", price: 210, capacityGb: 16, memoryType: "DDR5", modules: 2, speedMhz: 5600, amazonUrl: "https://www.amazon.com/CORSAIR-Vengeance-2x8GB-5600MHz-Intel/dp/B0H6G2Z2ZV" },
+  { id: "ram-32-6000", category: "ram", name: "32GB (2x16GB) DDR5-6000", brand: "Corsair", price: 370, capacityGb: 32, memoryType: "DDR5", modules: 2, speedMhz: 6000, amazonUrl: "https://www.amazon.com/CORSAIR-VENGEANCE-6000MHz-Compatible-Computer/dp/B0BZHTVHN5" },
+  { id: "ram-32-6400", category: "ram", name: "32GB (2x16GB) DDR5-6400 CL32", brand: "G.Skill", price: 410, capacityGb: 32, memoryType: "DDR5", modules: 2, speedMhz: 6400, amazonUrl: "https://www.amazon.com/G-Skill-Trident-PC5-51200-CL32-39-39-102-F5-6400J3239G16GA2-TZ5RK/dp/B09QS2K59B" },
+  { id: "ram-64-6000", category: "ram", name: "64GB (2x32GB) DDR5-6000", brand: "G.Skill", price: 700, capacityGb: 64, memoryType: "DDR5", modules: 2, speedMhz: 6000, amazonUrl: "https://www.amazon.com/G-Skill-Trident-288-Pin-CL30-40-40-96-F5-6000J3040G32GX2-TZ5N/dp/B0BJP3MRW1" },
 ];
 
 // NVMe SSD prices have roughly doubled+ since late 2025 due to the same NAND shortage
@@ -131,12 +146,12 @@ export const storages: Storage[] = [
 // unit is still a Bronze unit) — e.g. 80+ Gold/Platinum units rank above Bronze regardless
 // of how their wattage compares, so a premium GPU doesn't end up on a bargain-tier PSU.
 export const psus: Psu[] = [
-  { id: "psu-550-bronze", category: "psu", name: "550W 80+ Bronze", brand: "Corsair", price: 60, wattage: 550, tier: 1, amazonUrl: "https://www.amazon.com/Corsair-CV550-550-Power-Supply/dp/B07YVVNK6Y" },
-  { id: "psu-650-bronze", category: "psu", name: "650W 80+ Bronze", brand: "Corsair", price: 75, wattage: 650, tier: 2, amazonUrl: "https://www.amazon.com/Corsair-CV650-Watt-Bronze-Version/dp/B08MBBQBRB" },
-  { id: "psu-750-gold", category: "psu", name: "750W 80+ Gold", brand: "EVGA", price: 100, wattage: 750, tier: 5, amazonUrl: "https://www.amazon.com/EVGA-SuperNOVA-Modular-Warranty-120-GP-0750-X1/dp/B0797HL9Z4" },
-  { id: "psu-850-gold", category: "psu", name: "850W 80+ Gold", brand: "Corsair", price: 125, wattage: 850, tier: 6, amazonUrl: "https://www.amazon.com/CORSAIR-RM850x-Certified-Modular-Supply/dp/B079H5WNXN" },
-  { id: "psu-1000-gold", category: "psu", name: "1000W 80+ Gold", brand: "Seasonic", price: 170, wattage: 1000, tier: 7, amazonUrl: "https://www.amazon.com/Seasonic-Full-Modular-Warranty-Application-SSR-1000FX/dp/B0BG9SVPJ7" },
-  { id: "psu-1200-platinum", category: "psu", name: "1200W 80+ Platinum", brand: "Seasonic", price: 250, wattage: 1200, tier: 9, amazonUrl: "https://www.amazon.com/Seasonic-Flagship-SSR-1200PD-Platinum-Modular/dp/B01N7P5MBZ" },
+  { id: "psu-550-bronze", category: "psu", name: "550W 80+ Bronze", brand: "Corsair", price: 60, wattage: 550, tier: 1, efficiency: "Bronze", amazonUrl: "https://www.amazon.com/Corsair-CV550-550-Power-Supply/dp/B07YVVNK6Y" },
+  { id: "psu-650-bronze", category: "psu", name: "650W 80+ Bronze", brand: "Corsair", price: 75, wattage: 650, tier: 2, efficiency: "Bronze", amazonUrl: "https://www.amazon.com/Corsair-CV650-Watt-Bronze-Version/dp/B08MBBQBRB" },
+  { id: "psu-750-gold", category: "psu", name: "750W 80+ Gold", brand: "EVGA", price: 100, wattage: 750, tier: 5, efficiency: "Gold", amazonUrl: "https://www.amazon.com/EVGA-SuperNOVA-Modular-Warranty-120-GP-0750-X1/dp/B0797HL9Z4" },
+  { id: "psu-850-gold", category: "psu", name: "850W 80+ Gold", brand: "Corsair", price: 125, wattage: 850, tier: 6, efficiency: "Gold", amazonUrl: "https://www.amazon.com/CORSAIR-RM850x-Certified-Modular-Supply/dp/B079H5WNXN" },
+  { id: "psu-1000-gold", category: "psu", name: "1000W 80+ Gold", brand: "Seasonic", price: 170, wattage: 1000, tier: 7, efficiency: "Gold", amazonUrl: "https://www.amazon.com/Seasonic-Full-Modular-Warranty-Application-SSR-1000FX/dp/B0BG9SVPJ7" },
+  { id: "psu-1200-platinum", category: "psu", name: "1200W 80+ Platinum", brand: "Seasonic", price: 250, wattage: 1200, tier: 9, efficiency: "Platinum", amazonUrl: "https://www.amazon.com/Seasonic-Flagship-SSR-1200PD-Platinum-Modular/dp/B01N7P5MBZ" },
 ];
 
 export const cases: Case[] = [
@@ -149,6 +164,7 @@ export const cases: Case[] = [
 export const allParts: Part[] = [
   ...gpus,
   ...cpus,
+  ...coolers,
   ...motherboards,
   ...rams,
   ...storages,

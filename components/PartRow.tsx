@@ -1,22 +1,15 @@
 import type { Part } from "@/lib/types";
 import { amazonLinkFor, retailerSearchUrl } from "@/lib/retailerLinks";
+import { categoryLabels } from "@/lib/data/categoryMeta";
 
-const categoryLabels: Record<Part["category"], string> = {
-  gpu: "Graphics Card",
-  cpu: "Processor",
-  motherboard: "Motherboard",
-  ram: "Memory",
-  storage: "Storage",
-  psu: "Power Supply",
-  case: "Case",
-};
-
-function partDetail(part: Part): string | null {
+export function partDetail(part: Part): string | null {
   switch (part.category) {
     case "gpu":
       return `${part.tdp}W TDP`;
     case "cpu":
       return `${part.socket} socket · ${part.tdp}W TDP`;
+    case "cooler":
+      return `${part.coolerType === "aio" ? "Liquid (AIO)" : "Air"} · rated up to ${part.tdpRating}W`;
     case "motherboard":
       return `${part.socket} socket`;
     case "ram":
