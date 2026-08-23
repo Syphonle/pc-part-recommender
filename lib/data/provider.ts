@@ -1,4 +1,4 @@
-import type { Benchmark, Case, Cpu, Gpu, Motherboard, Psu, Ram, Storage } from "../types";
+import type { Benchmark, Case, Cpu, Game, Gpu, Motherboard, Psu, Ram, Storage } from "../types";
 import { benchmarks } from "./benchmarks";
 import { games } from "./games";
 import { cases, cpus, gpus, motherboards, psus, rams, storages } from "./parts";
@@ -17,7 +17,7 @@ export interface PartsProvider {
   getStorages(): Storage[];
   getPsus(): Psu[];
   getCases(): Case[];
-  getGames(): { id: string; name: string }[];
+  getGames(): Game[];
   getBenchmarks(): Benchmark[];
 }
 

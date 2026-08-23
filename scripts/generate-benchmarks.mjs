@@ -71,8 +71,11 @@ const gameProfiles = {
   // No clean anchor found; kept in the same "very light, CPU-bound, capped" family as
   // Valorant/CS2 per general knowledge of the LoL engine.
   "league-of-legends": { gameMult: 1200, cap: 300 },
-  // Anchor: RTX 4060 90-130fps (~110) at 1440p Epic settings, no upscaling.
-  fortnite: { gameMult: 387 },
+  // Anchor: RTX 4060 90-130fps (~110) at 1440p Epic settings, no upscaling. Cap: competitive
+  // players commonly report a practical ceiling in the 300-500fps range once CPU-bound at
+  // performance-mode settings — 360 splits that range, in the same family as the other
+  // esports titles' caps below.
+  fortnite: { gameMult: 387, cap: 360 },
   // Anchor: RTX 4060 ~120fps at 1440p high settings; search explicitly notes the modified
   // Source engine caps at 300fps regardless of GPU.
   "apex-legends": { gameMult: 422, cap: 300 },

@@ -184,6 +184,7 @@ function upgradeGpuWithLeftoverBudget(
   startPsu: Psu,
   startRam: Ram,
   resolution: Resolution,
+  cpuSensitivityMultiplier: number,
   gpus: Gpu[],
   cpus: Cpu[],
   motherboards: Motherboard[],
@@ -214,7 +215,7 @@ function upgradeGpuWithLeftoverBudget(
       // A stronger GPU raises the bar for what counts as "not bottlenecking" — if the current
       // CPU no longer clears it, swapping to the cheapest one that does is mandatory here,
       // same as the original bottleneck check, not a nice-to-have.
-      const requiredCpuIndex = candidate.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution];
+      const requiredCpuIndex = candidate.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution] * cpuSensitivityMultiplier;
       const candidateCpu =
         cpu.gamingIndex >= requiredCpuIndex ? cpu : cheapestMeeting(cpus, (c) => c.gamingIndex >= requiredCpuIndex);
 
@@ -293,13 +294,21 @@ export function recommendBuild(
   const storages = provider.getStorages();
   const psus = provider.getPsus();
   const cases = provider.getCases();
-  const gameNames = new Map(provider.getGames().map((g) => [g.id, g.name]));
+  const games = provider.getGames();
+  const gameNames = new Map(games.map((g) => [g.id, g.name]));
   const lookupFps = benchmarkLookup(provider.getBenchmarks());
 
   const warnings: string[] = [];
 
   const meetsAllTargets = (gpu: Gpu) =>
     targets.every((t) => (lookupFps(gpu.id, t.gameId, resolution) ?? 0) >= t.targetFps);
+
+  // If any selected game is especially CPU-sensitive (esports titles, chasing high refresh
+  // on a light-on-the-GPU engine), the whole build's CPU requirement scales up to match —
+  // a CPU that's merely adequate for a GPU-bound AAA title isn't necessarily adequate for
+  // Fortnite or League at the same GPU strength.
+  const gameSensitivity = new Map(games.map((g) => [g.id, g.cpuSensitivity]));
+  const cpuSensitivityMultiplier = Math.max(1, ...targets.map((t) => gameSensitivity.get(t.gameId) ?? 1));
 
   // Rough floor across both memory types — the real, platform-matched pick happens below
   // once the CPU (and therefore its socket/memory type) is known.
@@ -332,10 +341,10 @@ export function recommendBuild(
       ? qualifying[0]
       : [...affordableGpus].sort((a, b) => b.tier - a.tier)[0];
 
-  // Resolution-aware bottleneck check: how strong the CPU needs to be scales with both how
-  // demanding the GPU is and how much the resolution lets the CPU matter (see
-  // CPU_REQUIREMENT_FACTOR above).
-  const requiredCpuIndex = gpu.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution];
+  // Resolution-aware bottleneck check: how strong the CPU needs to be scales with how
+  // demanding the GPU is, how much the resolution lets the CPU matter (CPU_REQUIREMENT_FACTOR
+  // above), and how CPU-sensitive the selected games are (cpuSensitivityMultiplier above).
+  const requiredCpuIndex = gpu.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution] * cpuSensitivityMultiplier;
   const cpuCandidates = cpus
     .filter((c) => c.gamingIndex >= requiredCpuIndex)
     .sort((a, b) => a.price - b.price);
@@ -393,6 +402,7 @@ export function recommendBuild(
     psu,
     ram,
     resolution,
+    cpuSensitivityMultiplier,
     gpus,
     cpus,
     motherboards,

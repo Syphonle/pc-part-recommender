@@ -76,6 +76,14 @@ export type Part = Gpu | Cpu | Motherboard | Ram | Storage | Psu | Case;
 export interface Game {
   id: string;
   name: string;
+  /**
+   * How much more CPU headroom this game needs relative to what a "typical" GPU-bound AAA
+   * title needs at the same GPU strength/resolution, 1.0 = typical. Esports titles (light on
+   * the GPU, chasing very high refresh rates) are the classic CPU-bound genre — 1.0 alone
+   * would let a CPU that's merely "adequate for Cyberpunk" pair with a fast GPU in Fortnite or
+   * League, when in practice the CPU is the real ceiling for those specific games.
+   */
+  cpuSensitivity: number;
 }
 
 export interface Benchmark {
