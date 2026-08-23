@@ -8,7 +8,7 @@ import { PartRow } from "@/components/PartRow";
 import { gpus, cpus, motherboards, rams, storages, psus, cases } from "@/lib/data/parts";
 import { games as gameList } from "@/lib/data/games";
 import { benchmarks } from "@/lib/data/benchmarks";
-import { checkBuildCompatibility } from "@/lib/compatibility";
+import { checkBuildCompatibility, memoryTypeForSocket, PSU_HEADROOM_WATTS } from "@/lib/compatibility";
 import { benchmarkLookup } from "@/lib/recommend";
 import type { GameTarget, Part, Resolution } from "@/lib/types";
 
@@ -24,15 +24,19 @@ const lookupFps = benchmarkLookup(benchmarks);
 function CategoryPicker<T extends { id: string; name: string; price: number }>({
   label,
   parts,
+  totalCount,
   selectedId,
   onChange,
 }: {
   label: string;
   parts: T[];
+  /** Full unfiltered size of this category, used only to show "N of M available" once other picks have narrowed it down. */
+  totalCount?: number;
   selectedId: string | null;
   onChange: (id: string | null) => void;
 }) {
   const sorted = [...parts].sort((a, b) => a.price - b.price);
+  const isFiltered = totalCount !== undefined && parts.length < totalCount;
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
@@ -55,6 +59,11 @@ function CategoryPicker<T extends { id: string; name: string; price: number }>({
           </option>
         ))}
       </select>
+      {isFiltered && (
+        <span className="text-xs" style={{ color: "var(--viz-text-muted)" }}>
+          Showing {parts.length} of {totalCount} — narrowed by your other picks.
+        </span>
+      )}
     </div>
   );
 }
@@ -84,6 +93,35 @@ export default function BuildYourOwn() {
   const totalPrice = selectedParts.reduce((sum, p) => sum + p.price, 0);
   const issues = checkBuildCompatibility({ gpu, cpu, motherboard, ram, psu });
 
+  // Proactively hide options that couldn't possibly work with what's already picked, rather
+  // than letting an incompatible pick happen and only flagging it afterward. Each list only
+  // looks at the *other* categories, so picking any part in either order lands on the same
+  // set of choices — pick a 5600 first and B850/DDR5 disappear from their pickers; pick a
+  // B850 first and AM4 CPUs disappear from theirs.
+  const cpuOptions = cpus.filter((c) => {
+    if (motherboard && c.socket !== motherboard.socket) return false;
+    if (ram && memoryTypeForSocket[c.socket] !== ram.memoryType) return false;
+    return true;
+  });
+  const motherboardOptions = motherboards.filter((m) => {
+    if (cpu && m.socket !== cpu.socket) return false;
+    if (ram && memoryTypeForSocket[m.socket] !== ram.memoryType) return false;
+    return true;
+  });
+  const ramOptions = rams.filter((r) => {
+    if (cpu && r.memoryType !== memoryTypeForSocket[cpu.socket]) return false;
+    if (motherboard && r.memoryType !== memoryTypeForSocket[motherboard.socket]) return false;
+    return true;
+  });
+  const psuOptions = psus.filter((p) => {
+    if (gpu && cpu) {
+      const required = Math.max(gpu.recommendedPsuWatts, gpu.tdp + cpu.tdp + PSU_HEADROOM_WATTS);
+      return p.wattage >= required;
+    }
+    if (gpu) return p.wattage >= gpu.recommendedPsuWatts;
+    return true;
+  });
+
   return (
     <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
@@ -112,11 +150,17 @@ export default function BuildYourOwn() {
 
           <div className="grid grid-cols-1 gap-4 border-t p-6 sm:grid-cols-2" style={{ borderColor: "var(--surface-border)" }}>
             <CategoryPicker label="Graphics Card" parts={gpus} selectedId={gpuId} onChange={setGpuId} />
-            <CategoryPicker label="Processor" parts={cpus} selectedId={cpuId} onChange={setCpuId} />
-            <CategoryPicker label="Motherboard" parts={motherboards} selectedId={motherboardId} onChange={setMotherboardId} />
-            <CategoryPicker label="Memory" parts={rams} selectedId={ramId} onChange={setRamId} />
+            <CategoryPicker label="Processor" parts={cpuOptions} totalCount={cpus.length} selectedId={cpuId} onChange={setCpuId} />
+            <CategoryPicker
+              label="Motherboard"
+              parts={motherboardOptions}
+              totalCount={motherboards.length}
+              selectedId={motherboardId}
+              onChange={setMotherboardId}
+            />
+            <CategoryPicker label="Memory" parts={ramOptions} totalCount={rams.length} selectedId={ramId} onChange={setRamId} />
             <CategoryPicker label="Storage" parts={storages} selectedId={storageId} onChange={setStorageId} />
-            <CategoryPicker label="Power Supply" parts={psus} selectedId={psuId} onChange={setPsuId} />
+            <CategoryPicker label="Power Supply" parts={psuOptions} totalCount={psus.length} selectedId={psuId} onChange={setPsuId} />
             <CategoryPicker label="Case" parts={cases} selectedId={caseId} onChange={setCaseId} />
           </div>
 
