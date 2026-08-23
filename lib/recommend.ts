@@ -36,6 +36,9 @@ const CPU_REQUIREMENT_FACTOR: Record<Resolution, number> = {
 };
 /** Motherboard tier must be >= cpuTier - this, so a flagship CPU doesn't land on a bargain board (and vice versa). */
 const MOBO_TIER_SLACK = 3;
+/** Target motherboard spend as a fraction of the *total* budget (a common real build-guide rule of thumb), capped so a huge budget doesn't push it all the way to a flagship board on its own — that's reserved for when the CPU genuinely needs it (see the upgrade pass). */
+const MOBO_BUDGET_FRACTION = 0.15;
+const MOBO_SPEND_CAP = 300;
 /** PSU tier must be >= gpuTier - this, so a flagship GPU doesn't land on a bargain-tier PSU. */
 const PSU_TIER_SLACK = 3;
 /** Extra PSU wattage above GPU+CPU TDP to cover RAM/storage/fans/motherboard + safety margin, used as a floor alongside the GPU's own official recommendation. */
@@ -207,13 +210,20 @@ export function recommendBuild(
       ? cpuCandidates[0]
       : [...cpus].sort((a, b) => b.gamingIndex - a.gamingIndex)[0];
 
-  const motherboardCandidates = motherboards
-    .filter((m) => m.socket === cpu.socket && m.tier >= cpu.tier - MOBO_TIER_SLACK)
-    .sort((a, b) => a.price - b.price);
-  let motherboard =
-    motherboardCandidates.length > 0
-      ? motherboardCandidates[0]
-      : cheapest(motherboards.filter((m) => m.socket === cpu.socket));
+  // Meeting the CPU's floor requirement is a minimum, not a target — a bare A620M/A520M is
+  // technically "adequate" for almost any CPU under the tier check, but real builds scale
+  // the board with the overall budget (B550/B650/B850-class, not the rock-bottom chipset)
+  // once there's room for it. Spend up to a capped slice of the total budget on the best
+  // board available, never dropping below the floor.
+  const motherboardFloorCandidates = motherboards.filter(
+    (m) => m.socket === cpu.socket && m.tier >= cpu.tier - MOBO_TIER_SLACK
+  );
+  const motherboardPool =
+    motherboardFloorCandidates.length > 0
+      ? motherboardFloorCandidates
+      : motherboards.filter((m) => m.socket === cpu.socket);
+  const moboSpendCeiling = Math.min(budget * MOBO_BUDGET_FRACTION, MOBO_SPEND_CAP);
+  let motherboard = bestAffordable(motherboardPool, moboSpendCeiling);
 
   // The higher of the GPU's own official recommended PSU wattage and a TDP-based floor — the
   // official figure already accounts for real-world transient power spikes, not just steady TDP.
