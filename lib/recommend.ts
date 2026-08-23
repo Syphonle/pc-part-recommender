@@ -8,6 +8,7 @@ import type {
   Motherboard,
   Part,
   Psu,
+  Ram,
   Resolution,
   Socket,
 } from "./types";
@@ -77,39 +78,44 @@ function cheapestMeeting<T extends { price: number }>(parts: T[], predicate: (p:
 }
 
 /**
- * Spend real leftover budget upgrading the CPU (same socket, so RAM stays valid) instead of
- * just reporting it as unused headroom — e.g. a Ryzen 5 5500 build with $50+ to spare should
- * bump to a 5600 rather than sitting idle. Unlike a CPU-only upgrade, this also upgrades the
- * motherboard (and re-validates/upgrades the PSU) when the stronger CPU needs it, so the
- * ceiling isn't artificially set by whatever board got picked for the original, weaker CPU —
- * that cap was exactly what made flagship boards and X3D-class CPUs unreachable in practice
- * even on huge budgets. Each step only commits if the CPU + motherboard + PSU price delta
- * together still fits the remaining budget.
+ * Spend real leftover budget upgrading the CPU instead of just reporting it as unused
+ * headroom — e.g. a Ryzen 5 5500 build with $50+ to spare should bump to a 5600 rather than
+ * sitting idle. This crosses sockets/platforms when that's where the value is (AM4 is cheaper
+ * at almost every performance point below the X3D range, so it very often wins the *initial*
+ * minimum-requirement pick — without cross-socket upgrades, that permanently locks the whole
+ * build out of AM5 regardless of budget, which is exactly the bug this fixes). Swapping
+ * socket means the motherboard and RAM (DDR4 vs DDR5) both have to move with it, and the PSU
+ * gets re-validated for the new CPU's TDP — so each candidate's true cost is the CPU +
+ * motherboard + RAM + PSU delta together, and a step is only taken if that full delta still
+ * fits the remaining budget.
  */
 function upgradeBuildWithLeftoverBudget(
   startCpu: Cpu,
   startMotherboard: Motherboard,
   startPsu: Psu,
+  startRam: Ram,
   gpu: Gpu,
   cpus: Cpu[],
   motherboards: Motherboard[],
   psus: Psu[],
+  rams: Ram[],
   startRemaining: number
-): { cpu: Cpu; motherboard: Motherboard; psu: Psu; remaining: number } {
+): { cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; remaining: number } {
   let cpu = startCpu;
   let motherboard = startMotherboard;
   let psu = startPsu;
+  let ram = startRam;
   let remaining = startRemaining;
 
   while (true) {
-    let best: { cpu: Cpu; motherboard: Motherboard; psu: Psu; delta: number } | null = null;
+    let best: { cpu: Cpu; motherboard: Motherboard; psu: Psu; ram: Ram; delta: number } | null = null;
 
     for (const candidate of cpus) {
-      if (candidate.socket !== cpu.socket || candidate.gamingIndex <= cpu.gamingIndex) continue;
+      if (candidate.gamingIndex <= cpu.gamingIndex) continue;
 
       const requiredMoboTier = candidate.tier - MOBO_TIER_SLACK;
       const candidateMobo =
-        motherboard.tier >= requiredMoboTier
+        motherboard.socket === candidate.socket && motherboard.tier >= requiredMoboTier
           ? motherboard
           : cheapestMeeting(
               motherboards.filter((m) => m.socket === candidate.socket),
@@ -128,12 +134,25 @@ function upgradeBuildWithLeftoverBudget(
             );
       if (candidatePsu.wattage < requiredWattage) continue; // catalog has no PSU strong enough
 
+      const requiredMemoryType = memoryTypeForSocket[candidate.socket];
+      const candidateRam =
+        ram.memoryType === requiredMemoryType
+          ? ram
+          : cheapestMeeting(
+              rams.filter((r) => r.memoryType === requiredMemoryType),
+              (r) => r.capacityGb >= ram.capacityGb
+            );
+
       const delta =
-        candidate.price - cpu.price + (candidateMobo.price - motherboard.price) + (candidatePsu.price - psu.price);
+        candidate.price -
+        cpu.price +
+        (candidateMobo.price - motherboard.price) +
+        (candidatePsu.price - psu.price) +
+        (candidateRam.price - ram.price);
       if (delta > remaining) continue;
 
       if (!best || candidate.gamingIndex > best.cpu.gamingIndex || (candidate.gamingIndex === best.cpu.gamingIndex && delta < best.delta)) {
-        best = { cpu: candidate, motherboard: candidateMobo, psu: candidatePsu, delta };
+        best = { cpu: candidate, motherboard: candidateMobo, psu: candidatePsu, ram: candidateRam, delta };
       }
     }
 
@@ -142,9 +161,10 @@ function upgradeBuildWithLeftoverBudget(
     cpu = best.cpu;
     motherboard = best.motherboard;
     psu = best.psu;
+    ram = best.ram;
   }
 
-  return { cpu, motherboard, psu, remaining };
+  return { cpu, motherboard, psu, ram, remaining };
 }
 
 export function recommendBuild(
@@ -244,23 +264,26 @@ export function recommendBuild(
   // doesn't improve gaming FPS, so leftover budget shouldn't chase capacity there.
   const compatibleRams = rams.filter((r) => r.memoryType === memoryTypeForSocket[cpu.socket]);
   const ramTarget = cheapestMeeting(compatibleRams, (r) => r.capacityGb >= TARGET_RAM_GB);
-  const ram = ramTarget.price <= remaining ? ramTarget : cheapest(compatibleRams);
+  let ram = ramTarget.price <= remaining ? ramTarget : cheapest(compatibleRams);
   remaining -= ram.price;
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
   remaining -= storage.price;
 
-  // Real leftover budget goes toward a CPU (and, if needed, motherboard/PSU) upgrade before
-  // anything else — more genuine value than a nicer case, and the whole reason this step
-  // exists is to not leave money on the table when e.g. a 5500 build could stretch to a 5600,
-  // or a huge budget could stretch all the way to an X3D chip on a board that can drive it.
-  ({ cpu, motherboard, psu, remaining } = upgradeBuildWithLeftoverBudget(
+  // Real leftover budget goes toward a CPU (and, if needed, motherboard/PSU/RAM) upgrade
+  // before anything else — more genuine value than a nicer case, and the whole reason this
+  // step exists is to not leave money on the table when e.g. a 5500 build could stretch to a
+  // 5600, or a huge budget could stretch all the way to an AM5 X3D chip on a board that can
+  // drive it, even though the build started out on AM4.
+  ({ cpu, motherboard, psu, ram, remaining } = upgradeBuildWithLeftoverBudget(
     cpu,
     motherboard,
     psu,
+    ram,
     gpu,
     cpus,
     motherboards,
     psus,
+    rams,
     remaining
   ));
 
