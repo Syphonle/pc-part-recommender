@@ -5,6 +5,7 @@ import type {
   Cooler,
   Cpu,
   GameResult,
+  GameTarget,
   Gpu,
   Motherboard,
   Part,
@@ -184,6 +185,16 @@ function upgradeBuildWithLeftoverBudget(
  * cheapest CPU (and, if needed, motherboard/RAM) that avoids it is bundled into the same
  * step's cost as a requirement, not an option — this never takes a step that leaves the build
  * internally inconsistent.
+ *
+ * "Moves the FPS numbers" is taken literally: a candidate only counts as an upgrade if it
+ * predicts a strictly higher fps than the current GPU in at least one of the user's actual
+ * target games. Several esports titles (League, Valorant, CS2, Apex, Fortnite) have a hard
+ * engine/practical fps cap baked into the benchmark table — once the current GPU is already
+ * at that cap, every stronger GPU predicts the exact same number for that game, so spending
+ * more on GPU tier buys literally nothing there. Without this check, a League-of-Legends-only
+ * build at a modest fps target would still burn its entire budget maxing out the GPU (e.g. an
+ * RTX 4070 predicting 300fps against a 60fps target) instead of leaving room for a stronger
+ * CPU or more RAM, which is what actually happened before this check existed.
  */
 function upgradeGpuWithLeftoverBudget(
   startGpu: Gpu,
@@ -194,6 +205,8 @@ function upgradeGpuWithLeftoverBudget(
   startRam: Ram,
   resolution: Resolution,
   cpuSensitivityMultiplier: number,
+  targets: GameTarget[],
+  lookupFps: (gpuId: string, gameId: string, resolution: Resolution) => number | undefined,
   gpus: Gpu[],
   cpus: Cpu[],
   coolers: Cooler[],
@@ -223,6 +236,14 @@ function upgradeGpuWithLeftoverBudget(
 
     for (const candidate of gpus) {
       if (candidate.gamingIndex <= gpu.gamingIndex) continue;
+
+      // Skip candidates that can't actually do better in any game the user asked about — a
+      // higher gamingIndex alone isn't enough if it's a capped/plateaued title where the
+      // current GPU already predicts the max possible number.
+      const improvesAnyTarget = targets.some(
+        (t) => (lookupFps(candidate.id, t.gameId, resolution) ?? 0) > (lookupFps(gpu.id, t.gameId, resolution) ?? 0)
+      );
+      if (!improvesAnyTarget) continue;
 
       // A stronger GPU raises the bar for what counts as "not bottlenecking" — if the current
       // CPU no longer clears it, swapping to the cheapest one that does is mandatory here,
@@ -439,6 +460,8 @@ export function recommendBuild(
     ram,
     resolution,
     cpuSensitivityMultiplier,
+    targets,
+    lookupFps,
     gpus,
     cpus,
     coolers,
