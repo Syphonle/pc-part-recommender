@@ -10,16 +10,9 @@ import type {
   Psu,
   Ram,
   Resolution,
-  Socket,
 } from "./types";
 import { localPartsProvider, type PartsProvider } from "./data/provider";
-
-/** AM4 boards take DDR4; AM5 and LGA1851 both take DDR5. A RAM kit only fits a matching platform. */
-const memoryTypeForSocket: Record<Socket, "DDR4" | "DDR5"> = {
-  AM4: "DDR4",
-  AM5: "DDR5",
-  LGA1851: "DDR5",
-};
+import { memoryTypeForSocket, PSU_HEADROOM_WATTS } from "./compatibility";
 
 /**
  * How much of the GPU's own relative strength (gamingIndex, 0-100 vs the fastest GPU) the
@@ -42,14 +35,12 @@ const MOBO_BUDGET_FRACTION = 0.15;
 const MOBO_SPEND_CAP = 300;
 /** PSU tier must be >= gpuTier - this, so a flagship GPU doesn't land on a bargain-tier PSU. */
 const PSU_TIER_SLACK = 3;
-/** Extra PSU wattage above GPU+CPU TDP to cover RAM/storage/fans/motherboard + safety margin, used as a floor alongside the GPU's own official recommendation. */
-const PSU_HEADROOM_WATTS = 150;
 /** 32GB is the practical sweet spot for gaming — more doesn't raise FPS, so we don't chase capacity with leftover budget. */
 const TARGET_RAM_GB = 32;
 /** 1TB comfortably fits a modern game library; bigger drives are a capacity preference, not a performance need. */
 const TARGET_STORAGE_GB = 1000;
 
-function benchmarkLookup(benchmarks: Benchmark[]) {
+export function benchmarkLookup(benchmarks: Benchmark[]) {
   const map = new Map<string, number>();
   for (const b of benchmarks) {
     map.set(`${b.gpuId}|${b.gameId}|${b.resolution}`, b.fps);
