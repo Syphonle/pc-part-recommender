@@ -13,6 +13,12 @@ const modes = [
     description:
       "Pick each part yourself from the catalog. Get live compatibility warnings, buy links, and an FPS preview as you go.",
   },
+  {
+    href: "/guides/",
+    title: "How to build",
+    description:
+      "Step-by-step video guides for physically assembling your PC, from seating the CPU to first boot.",
+  },
 ];
 
 export default function Home() {
