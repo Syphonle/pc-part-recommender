@@ -36,8 +36,10 @@ const MOBO_BUDGET_FRACTION = 0.15;
 const MOBO_SPEND_CAP = 300;
 /** PSU tier must be >= gpuTier - this, so a flagship GPU doesn't land on a bargain-tier PSU. */
 const PSU_TIER_SLACK = 3;
-/** 32GB is the practical sweet spot for gaming — more doesn't raise FPS, so we don't chase capacity with leftover budget. */
-const TARGET_RAM_GB = 32;
+/** 16GB comfortably covers virtually all current games — the initial allocation targets this, not 32GB, so a budget CPU doesn't end up paired with RAM that costs more than it does while the GPU sits at the cheapest tier available. */
+const RAM_FLOOR_GB = 16;
+/** 32GB is worth having for multitasking/streaming, but doesn't raise FPS — so it's only worth paying for once the GPU and CPU/platform passes are already maxed out and there's real budget left with nothing better to spend it on. See the RAM bump right before the case pick. */
+const RAM_UPGRADE_TARGET_GB = 32;
 /** 1TB comfortably fits a modern game library; bigger drives are a capacity preference, not a performance need. */
 const TARGET_STORAGE_GB = 1000;
 
@@ -334,7 +336,7 @@ export function recommendBuild(
 
   // Rough floor across both memory types — the real, platform-matched pick happens below
   // once the CPU (and therefore its socket/memory type) is known.
-  const genericRamFloor = cheapestMeeting(rams, (r) => r.capacityGb >= TARGET_RAM_GB);
+  const genericRamFloor = cheapestMeeting(rams, (r) => r.capacityGb >= RAM_FLOOR_GB);
   const storageTarget = cheapestMeeting(storages, (s) => s.capacityGb >= TARGET_STORAGE_GB);
 
   // Floor estimate of everything besides the GPU, so the GPU pick doesn't eat the whole budget.
@@ -413,11 +415,13 @@ export function recommendBuild(
 
   let remaining = budget - gpu.price - cpu.price - cooler.price - motherboard.price - psu.price;
 
-  // RAM must match the platform's memory type (DDR4 for AM4, DDR5 for AM5/LGA1851) — and
-  // target a sensible capacity rather than maximizing spend, since going bigger than 32GB
-  // doesn't improve gaming FPS, so leftover budget shouldn't chase capacity there.
+  // RAM must match the platform's memory type (DDR4 for AM4, DDR5 for AM5/LGA1851). Targets
+  // the 16GB floor here, not 32GB — going bigger doesn't improve gaming FPS, so it shouldn't
+  // compete with the GPU/CPU passes for budget (a 32GB kit outright costing more than a
+  // budget CPU, while the GPU sits at the cheapest tier available, is exactly backwards). A
+  // 32GB bump happens later, after those passes, only with genuine leftover budget.
   const compatibleRams = rams.filter((r) => r.memoryType === memoryTypeForSocket[cpu.socket]);
-  const ramTarget = cheapestMeeting(compatibleRams, (r) => r.capacityGb >= TARGET_RAM_GB);
+  const ramTarget = cheapestMeeting(compatibleRams, (r) => r.capacityGb >= RAM_FLOOR_GB);
   let ram = ramTarget.price <= remaining ? ramTarget : cheapest(compatibleRams);
   remaining -= ram.price;
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
@@ -462,6 +466,18 @@ export function recommendBuild(
     rams,
     remaining
   ));
+
+  // Only now — after the GPU and CPU/platform are both maxed out — is a RAM capacity bump
+  // considered: 32GB has real value (multitasking, streaming, background load), just none of
+  // it shows up in the FPS numbers, so it never competed with parts that do for budget.
+  const ramUpgrade = cheapestMeeting(
+    rams.filter((r) => r.memoryType === ram.memoryType),
+    (r) => r.capacityGb >= RAM_UPGRADE_TARGET_GB
+  );
+  if (ramUpgrade.capacityGb > ram.capacityGb && ramUpgrade.price - ram.price <= remaining) {
+    remaining -= ramUpgrade.price - ram.price;
+    ram = ramUpgrade;
+  }
 
   // The case is the one place spending any budget still left has a real (if minor) upside —
   // cooling, build quality, aesthetics — and it's capped low, so it won't run away with it.
