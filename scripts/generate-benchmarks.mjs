@@ -68,9 +68,16 @@ const gameProfiles = {
   // Anchor: RTX 5090 ~529fps at 1440p high (Tom's Hardware-style tracker) — a direct,
   // high-confidence anchor at perfIndex 100, so no additional cap needed.
   "counter-strike-2": { gameMult: 529 },
-  // No clean anchor found; kept in the same "very light, CPU-bound, capped" family as
-  // Valorant/CS2 per general knowledge of the LoL engine.
-  "league-of-legends": { gameMult: 1200, cap: 300 },
+  // Previously modeled the same as Valorant/CS2 (flat cap around 300) with no real anchor —
+  // wrong on inspection: the LoL client's own fps cap tops out at 80, but the engine is
+  // uncapped beyond that and community reports of 400-500fps are all from empty/idle scenes.
+  // Real *gameplay* averages (which is what this table models everywhere else) are much
+  // lower and genuinely GPU-scaling: a laptop RTX 4070 averages ~195fps at 1440p (154fps 1%
+  // low), and an RTX 4060 clears ~200fps only at 1080p — both far short of a 300fps floor
+  // regardless of GPU. Anchored off the 4070 data point (desktop 4070 assumed modestly ahead
+  // of its laptop variant), with the cap raised to reflect the real ~400-500fps uncapped
+  // ceiling rather than the old, unsourced 300.
+  "league-of-legends": { gameMult: 550, cap: 400 },
   // Anchor: RTX 4060 90-130fps (~110) at 1440p Epic settings, no upscaling. Cap: competitive
   // players commonly report a practical ceiling in the 300-500fps range once CPU-bound at
   // performance-mode settings — 360 splits that range, in the same family as the other
