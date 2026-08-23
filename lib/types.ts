@@ -23,8 +23,10 @@ interface BasePart {
 export interface Gpu extends BasePart {
   category: "gpu";
   tdp: number;
-  /** Relative performance tier used for CPU-bottleneck matching, 1 (entry) - 10 (flagship). */
+  /** Coarse build-quality tier, 1 (entry) - 10 (flagship) — used for PSU-tier matching, not the CPU bottleneck check. */
   tier: number;
+  /** Real relative gaming performance at 1440p, sourced from a GPU benchmark hierarchy, RTX 5090 = 100. */
+  gamingIndex: number;
   /** The manufacturer's official recommended system PSU wattage for this card. */
   recommendedPsuWatts: number;
 }
@@ -33,8 +35,10 @@ export interface Cpu extends BasePart {
   category: "cpu";
   socket: Socket;
   tdp: number;
-  /** Relative performance tier on the same 1 (entry) - 10 (flagship) scale as Gpu.tier, used for bottleneck matching. */
+  /** Coarse build-quality tier, 1 (entry) - 10 (flagship), derived from gamingIndex — used for motherboard-tier matching. */
   tier: number;
+  /** Real relative *gaming* performance at 1080p (where CPU differences show up most), sourced from a CPU benchmark hierarchy — not general/productivity benchmarks, which overstate high-core-count CPUs for gaming purposes. Scale is CPU-population-relative, not directly comparable to Gpu.gamingIndex's number line. */
+  gamingIndex: number;
 }
 
 export interface Motherboard extends BasePart {

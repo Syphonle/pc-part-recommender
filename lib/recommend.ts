@@ -20,8 +20,20 @@ const memoryTypeForSocket: Record<Socket, "DDR4" | "DDR5"> = {
   LGA1851: "DDR5",
 };
 
-/** CPU tier must be >= gpuTier - this, so it doesn't bottleneck the chosen GPU. */
-const CPU_TIER_SLACK = 2;
+/**
+ * How much of the GPU's own relative strength (gamingIndex, 0-100 vs the fastest GPU) the
+ * CPU's gamingIndex (0-100 vs the fastest *gaming* CPU — a different, more compressed scale,
+ * not directly commensurate with the GPU one) must clear to avoid bottlenecking it. CPU
+ * bottlenecks bite hardest at 1080p (the GPU has less work per frame, so the CPU's own
+ * ceiling matters more) and are largely masked at 4K (the GPU is almost always the limiting
+ * factor there). This is a modeled simplification — not measured per-pairing data — but the
+ * resolution-dependent shape reflects well-established real-world bottleneck behavior.
+ */
+const CPU_REQUIREMENT_FACTOR: Record<Resolution, number> = {
+  "1080p": 0.62,
+  "1440p": 0.48,
+  "4k": 0.28,
+};
 /** Motherboard tier must be >= cpuTier - this, so a flagship CPU doesn't land on a bargain board (and vice versa). */
 const MOBO_TIER_SLACK = 3;
 /** PSU tier must be >= gpuTier - this, so a flagship GPU doesn't land on a bargain-tier PSU. */
@@ -81,7 +93,7 @@ function upgradeCpuWithLeftoverBudget(
 
   while (true) {
     const candidates = cpus.filter((c) => {
-      if (c.socket !== cpu.socket || c.tier <= cpu.tier) return false;
+      if (c.socket !== cpu.socket || c.gamingIndex <= cpu.gamingIndex) return false;
       if (c.price - cpu.price > remaining) return false;
       if (motherboard.tier < c.tier - MOBO_TIER_SLACK) return false;
       const required = Math.max(gpu.recommendedPsuWatts, gpu.tdp + c.tdp + PSU_HEADROOM_WATTS);
@@ -89,8 +101,8 @@ function upgradeCpuWithLeftoverBudget(
     });
     if (candidates.length === 0) break;
 
-    // Best tier affordable; cheapest as a tie-breaker.
-    candidates.sort((a, b) => b.tier - a.tier || a.price - b.price);
+    // Best gaming performance affordable; cheapest as a tie-breaker.
+    candidates.sort((a, b) => b.gamingIndex - a.gamingIndex || a.price - b.price);
     const next = candidates[0];
     remaining -= next.price - cpu.price;
     cpu = next;
@@ -150,10 +162,17 @@ export function recommendBuild(
       ? qualifying[0]
       : [...affordableGpus].sort((a, b) => b.tier - a.tier)[0];
 
+  // Resolution-aware bottleneck check: how strong the CPU needs to be scales with both how
+  // demanding the GPU is and how much the resolution lets the CPU matter (see
+  // CPU_REQUIREMENT_FACTOR above).
+  const requiredCpuIndex = gpu.gamingIndex * CPU_REQUIREMENT_FACTOR[resolution];
   const cpuCandidates = cpus
-    .filter((c) => c.tier >= gpu.tier - CPU_TIER_SLACK)
+    .filter((c) => c.gamingIndex >= requiredCpuIndex)
     .sort((a, b) => a.price - b.price);
-  let cpu = cpuCandidates.length > 0 ? cpuCandidates[0] : cheapest(cpus);
+  let cpu =
+    cpuCandidates.length > 0
+      ? cpuCandidates[0]
+      : [...cpus].sort((a, b) => b.gamingIndex - a.gamingIndex)[0];
 
   const motherboardCandidates = motherboards
     .filter((m) => m.socket === cpu.socket && m.tier >= cpu.tier - MOBO_TIER_SLACK)

@@ -19,52 +19,63 @@ import type { Case, Cpu, Gpu, Motherboard, Part, Psu, Ram, Storage } from "../ty
 // churns, so a listing can still go stale; PartRow falls back to a live Amazon search for
 // any part without one.
 
+// gamingIndex: real relative 1440p gaming performance from techfuelhq's 2026 GPU hierarchy
+// (RTX 5090 = 100) — the same source used for the FPS benchmark table, now also driving the
+// CPU-bottleneck check in lib/recommend.ts instead of the hand-guessed `tier` gap it used to.
 export const gpus: Gpu[] = [
-  { id: "arc-b570", category: "gpu", name: "Intel Arc B570", brand: "Intel", price: 259, tdp: 150, tier: 2, recommendedPsuWatts: 500, amazonUrl: "https://www.amazon.com/ASRock-B570-Challenger-Cooling-Graphics/dp/B0DQYM2MHX" },
-  { id: "rtx-3060-12g", category: "gpu", name: "GeForce RTX 3060 12GB", brand: "NVIDIA", price: 280, tdp: 170, tier: 2, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-RTX-3060-12G/dp/B08WPRMVWB" },
-  { id: "arc-b580", category: "gpu", name: "Intel Arc B580", brand: "Intel", price: 303, tdp: 190, tier: 3, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASRock-Intel-B580-Challenger-Graphics/dp/B0DNV4NWF7" },
-  { id: "rx-7600", category: "gpu", name: "Radeon RX 7600", brand: "AMD", price: 279, tdp: 165, tier: 3, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/Sapphire-11324-01-20G-Radeon-Gaming-Graphics/dp/B0C4WBW3XX" },
-  { id: "rtx-4060", category: "gpu", name: "GeForce RTX 4060", brand: "NVIDIA", price: 339, tdp: 115, tier: 3, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-4060-Gaming-Graphics/dp/B0C7WCKXB6" },
-  { id: "rtx-5060", category: "gpu", name: "GeForce RTX 5060", brand: "NVIDIA", price: 330, tdp: 145, tier: 4, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/ASUS-Graphics-DisplayPort-Axial-tech-Technology/dp/B0F8PR9L3X" },
-  { id: "rx-9060xt-8g", category: "gpu", name: "Radeon RX 9060 XT 8GB", brand: "AMD", price: 400, tdp: 150, tier: 4, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-GeForce-Dual-Fan-Graphics-Warranty/dp/B0F8PR76W4" },
-  { id: "rx-9060xt-16g", category: "gpu", name: "Radeon RX 9060 XT 16GB", brand: "AMD", price: 470, tdp: 160, tier: 5, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-RadeonTM-Graphics-2-5-Slot-axial-tech/dp/B0F8PPT3G1" },
-  { id: "rtx-4060ti-16g", category: "gpu", name: "GeForce RTX 4060 Ti 16GB", brand: "NVIDIA", price: 450, tdp: 165, tier: 5, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-Ventus-Black-Graphics/dp/B0CBK7BRL9" },
-  { id: "rtx-5060ti-16g", category: "gpu", name: "GeForce RTX 5060 Ti 16GB", brand: "NVIDIA", price: 805, tdp: 180, tier: 5, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASUS-DisplayPort-2-5-Slot-Axial-tech-Technology/dp/B0F7WB6LSH" },
-  { id: "rx-7700xt", category: "gpu", name: "Radeon RX 7700 XT", brand: "AMD", price: 409, tdp: 245, tier: 5, recommendedPsuWatts: 700, amazonUrl: "https://www.amazon.com/SAPPHIRE-PULSE-RADEON-GAMING-GDDR6-VIDEO/dp/B0CGLYMRFX" },
-  { id: "rtx-4070", category: "gpu", name: "GeForce RTX 4070", brand: "NVIDIA", price: 520, tdp: 200, tier: 6, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4070-Founders-Graphics/dp/B0C3SPXZJ8" },
-  { id: "rtx-5070", category: "gpu", name: "GeForce RTX 5070", brand: "NVIDIA", price: 900, tdp: 220, tier: 6, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-GDDR7-Graphics-Graphite/dp/B0F7XHBT13" },
-  { id: "rx-9070", category: "gpu", name: "Radeon RX 9070", brand: "AMD", price: 820, tdp: 220, tier: 7, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/GIGABYTE-Radeon-Graphics-GV-R9070GAMING-OC-16GD/dp/B0DS2QZC9P" },
-  { id: "rx-9070xt", category: "gpu", name: "Radeon RX 9070 XT", brand: "AMD", price: 799, tdp: 304, tier: 7, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/Sapphire-11348-03-20G-RadeonTM-Gaming-Graphics/dp/B0DTHMPWFR" },
-  { id: "rtx-5070ti", category: "gpu", name: "GeForce RTX 5070 Ti", brand: "NVIDIA", price: 1050, tdp: 300, tier: 8, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N507TGAMING-OC-16GD/dp/B0DTRC7782" },
-  { id: "rtx-4080-super", category: "gpu", name: "GeForce RTX 4080 Super", brand: "NVIDIA", price: 1000, tdp: 320, tier: 8, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4080-Super-GDDR6X/dp/B0CVNM2LBK" },
-  { id: "rtx-5080", category: "gpu", name: "GeForce RTX 5080", brand: "NVIDIA", price: 1500, tdp: 360, tier: 9, recommendedPsuWatts: 850, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-RTX-5080-Founders/dp/B0DYVCGVK4" },
-  { id: "rtx-5090", category: "gpu", name: "GeForce RTX 5090", brand: "NVIDIA", price: 4700, tdp: 575, tier: 10, recommendedPsuWatts: 1000, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N5090GAMING-OC-32GD/dp/B0DT7GBNWQ" },
+  { id: "arc-b570", category: "gpu", name: "Intel Arc B570", brand: "Intel", price: 259, tdp: 150, tier: 2, gamingIndex: 26.5, recommendedPsuWatts: 500, amazonUrl: "https://www.amazon.com/ASRock-B570-Challenger-Cooling-Graphics/dp/B0DQYM2MHX" },
+  { id: "rtx-3060-12g", category: "gpu", name: "GeForce RTX 3060 12GB", brand: "NVIDIA", price: 280, tdp: 170, tier: 2, gamingIndex: 25.0, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-RTX-3060-12G/dp/B08WPRMVWB" },
+  { id: "arc-b580", category: "gpu", name: "Intel Arc B580", brand: "Intel", price: 303, tdp: 190, tier: 3, gamingIndex: 30.3, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASRock-Intel-B580-Challenger-Graphics/dp/B0DNV4NWF7" },
+  { id: "rx-7600", category: "gpu", name: "Radeon RX 7600", brand: "AMD", price: 279, tdp: 165, tier: 3, gamingIndex: 27.2, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/Sapphire-11324-01-20G-Radeon-Gaming-Graphics/dp/B0C4WBW3XX" },
+  { id: "rtx-4060", category: "gpu", name: "GeForce RTX 4060", brand: "NVIDIA", price: 339, tdp: 115, tier: 3, gamingIndex: 28.4, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-4060-Gaming-Graphics/dp/B0C7WCKXB6" },
+  { id: "rtx-5060", category: "gpu", name: "GeForce RTX 5060", brand: "NVIDIA", price: 330, tdp: 145, tier: 4, gamingIndex: 35.8, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/ASUS-Graphics-DisplayPort-Axial-tech-Technology/dp/B0F8PR9L3X" },
+  { id: "rx-9060xt-8g", category: "gpu", name: "Radeon RX 9060 XT 8GB", brand: "AMD", price: 400, tdp: 150, tier: 4, gamingIndex: 37.3, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-GeForce-Dual-Fan-Graphics-Warranty/dp/B0F8PR76W4" },
+  { id: "rx-9060xt-16g", category: "gpu", name: "Radeon RX 9060 XT 16GB", brand: "AMD", price: 470, tdp: 160, tier: 5, gamingIndex: 40.2, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-RadeonTM-Graphics-2-5-Slot-axial-tech/dp/B0F8PPT3G1" },
+  { id: "rtx-4060ti-16g", category: "gpu", name: "GeForce RTX 4060 Ti 16GB", brand: "NVIDIA", price: 450, tdp: 165, tier: 5, gamingIndex: 36.2, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-Ventus-Black-Graphics/dp/B0CBK7BRL9" },
+  { id: "rtx-5060ti-16g", category: "gpu", name: "GeForce RTX 5060 Ti 16GB", brand: "NVIDIA", price: 805, tdp: 180, tier: 5, gamingIndex: 43.9, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASUS-DisplayPort-2-5-Slot-Axial-tech-Technology/dp/B0F7WB6LSH" },
+  { id: "rx-7700xt", category: "gpu", name: "Radeon RX 7700 XT", brand: "AMD", price: 409, tdp: 245, tier: 5, gamingIndex: 43.4, recommendedPsuWatts: 700, amazonUrl: "https://www.amazon.com/SAPPHIRE-PULSE-RADEON-GAMING-GDDR6-VIDEO/dp/B0CGLYMRFX" },
+  { id: "rtx-4070", category: "gpu", name: "GeForce RTX 4070", brand: "NVIDIA", price: 520, tdp: 200, tier: 6, gamingIndex: 46.5, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4070-Founders-Graphics/dp/B0C3SPXZJ8" },
+  { id: "rtx-5070", category: "gpu", name: "GeForce RTX 5070", brand: "NVIDIA", price: 900, tdp: 220, tier: 6, gamingIndex: 57.6, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-GDDR7-Graphics-Graphite/dp/B0F7XHBT13" },
+  { id: "rx-9070", category: "gpu", name: "Radeon RX 9070", brand: "AMD", price: 820, tdp: 220, tier: 7, gamingIndex: 62.1, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/GIGABYTE-Radeon-Graphics-GV-R9070GAMING-OC-16GD/dp/B0DS2QZC9P" },
+  { id: "rx-9070xt", category: "gpu", name: "Radeon RX 9070 XT", brand: "AMD", price: 799, tdp: 304, tier: 7, gamingIndex: 69.7, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/Sapphire-11348-03-20G-RadeonTM-Gaming-Graphics/dp/B0DTHMPWFR" },
+  { id: "rtx-5070ti", category: "gpu", name: "GeForce RTX 5070 Ti", brand: "NVIDIA", price: 1050, tdp: 300, tier: 8, gamingIndex: 69.8, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N507TGAMING-OC-16GD/dp/B0DTRC7782" },
+  { id: "rtx-4080-super", category: "gpu", name: "GeForce RTX 4080 Super", brand: "NVIDIA", price: 1000, tdp: 320, tier: 8, gamingIndex: 70.9, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4080-Super-GDDR6X/dp/B0CVNM2LBK" },
+  { id: "rtx-5080", category: "gpu", name: "GeForce RTX 5080", brand: "NVIDIA", price: 1500, tdp: 360, tier: 9, gamingIndex: 76.7, recommendedPsuWatts: 850, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-RTX-5080-Founders/dp/B0DYVCGVK4" },
+  { id: "rtx-5090", category: "gpu", name: "GeForce RTX 5090", brand: "NVIDIA", price: 4700, tdp: 575, tier: 10, gamingIndex: 100.0, recommendedPsuWatts: 1000, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N5090GAMING-OC-32GD/dp/B0DT7GBNWQ" },
 ];
 
+// gamingIndex: real relative *gaming* performance (not general/productivity benchmarks,
+// which overstate high-core-count CPUs — gaming barely scales past 6-8 cores). Sourced from
+// techfuelhq's 2026 CPU hierarchy for the 7 current-gen chips it covers; the rest (older
+// AM4 Ryzen 5000 parts, and current-gen chips outside that table) are positioned from
+// several head-to-head gaming comparisons against those 7 anchors. tier (1-10) is derived
+// from gamingIndex via the same curve used for GPUs, so it's no longer a separate guess —
+// note gaming performance is much less spread out than GPU performance, so CPU tiers cluster
+// in the 2-7 range rather than using the full 1-10 scale; that compression is real, not a bug.
 export const cpus: Cpu[] = [
   // AM4 (paired with DDR4, not DDR5) — Ryzen 5000 series stuck around specifically because
   // it's the budget lever: an AM4 CPU + motherboard + DDR4 kit is dramatically cheaper than
   // any AM5/LGA1851 combination, especially with DDR5 prices where they are. 5500 is the
   // floor (weakest/cheapest); 5600 has 2x the L3 cache and a higher boost clock for a modest
   // step up — both keep their real relative pricing (5600 costs more than 5500).
-  { id: "ryzen-5-5500", category: "cpu", name: "Ryzen 5 5500", brand: "AMD", price: 95, socket: "AM4", tdp: 65, tier: 2, amazonUrl: "https://www.amazon.com/AMD-5500-12-Thread-Unlocked-Processor/dp/B09VCJ171S" },
-  { id: "ryzen-5-5600", category: "cpu", name: "Ryzen 5 5600", brand: "AMD", price: 120, socket: "AM4", tdp: 65, tier: 3, amazonUrl: "https://www.amazon.com/AMD-5600-12-Thread-Unlocked-Processor/dp/B09VCHR1VH" },
-  { id: "ryzen-7-5700x", category: "cpu", name: "Ryzen 7 5700X", brand: "AMD", price: 200, socket: "AM4", tdp: 65, tier: 5 },
+  { id: "ryzen-5-5500", category: "cpu", name: "Ryzen 5 5500", brand: "AMD", price: 95, socket: "AM4", tdp: 65, tier: 2, gamingIndex: 40, amazonUrl: "https://www.amazon.com/AMD-5500-12-Thread-Unlocked-Processor/dp/B09VCJ171S" },
+  { id: "ryzen-5-5600", category: "cpu", name: "Ryzen 5 5600", brand: "AMD", price: 120, socket: "AM4", tdp: 65, tier: 2, gamingIndex: 45, amazonUrl: "https://www.amazon.com/AMD-5600-12-Thread-Unlocked-Processor/dp/B09VCHR1VH" },
+  { id: "ryzen-7-5700x", category: "cpu", name: "Ryzen 7 5700X", brand: "AMD", price: 200, socket: "AM4", tdp: 65, tier: 3, gamingIndex: 50 },
   // 3D V-Cache makes this punch well above its (older) generation specifically for gaming —
   // AMD relaunched it as a "10th Anniversary Edition" in mid-2026 at this official price,
   // undercutting the $450-800 collector pricing older stock was fetching beforehand.
-  { id: "ryzen-7-5800x3d", category: "cpu", name: "Ryzen 7 5800X3D", brand: "AMD", price: 349, socket: "AM4", tdp: 105, tier: 8, amazonUrl: "https://www.amazon.com/AMD-5800X3D-16-Thread-Processor-Technology/dp/B09VCJ2SHD" },
-  { id: "ryzen-5-7500f", category: "cpu", name: "Ryzen 5 7500F", brand: "AMD", price: 150, socket: "AM5", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/AMD-Ryzen-7500F-3-7GHz-Threads/dp/B0D1CK42PV" },
-  { id: "core-ultra-5-225f", category: "cpu", name: "Core Ultra 5 225F", brand: "Intel", price: 210, socket: "LGA1851", tdp: 65, tier: 4, amazonUrl: "https://www.amazon.com/Intel%C2%AE-CoreTM-Desktop-Processor-P-cores/dp/B0DT7CW7VR" },
-  { id: "ryzen-5-9600x", category: "cpu", name: "Ryzen 5 9600X", brand: "AMD", price: 235, socket: "AM5", tdp: 65, tier: 5, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9600X-12-Thread-Processor/dp/B0D6NN6TM7" },
-  { id: "ryzen-7-7700", category: "cpu", name: "Ryzen 7 7700", brand: "AMD", price: 270, socket: "AM5", tdp: 65, tier: 6, amazonUrl: "https://www.amazon.com/AMD-7700-16-Thread-Unlocked-Processor/dp/B0BMQHSCVF" },
-  { id: "core-ultra-5-245k", category: "cpu", name: "Core Ultra 5 245K", brand: "Intel", price: 270, socket: "LGA1851", tdp: 125, tier: 6, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-245K/dp/B0DFK2P311" },
-  { id: "ryzen-7-9700x", category: "cpu", name: "Ryzen 7 9700X", brand: "AMD", price: 310, socket: "AM5", tdp: 65, tier: 7, amazonUrl: "https://www.amazon.com/AMD-9700X-16-Thread-Unlocked-Processor/dp/B0D6NMDNNX" },
-  { id: "core-ultra-7-265k", category: "cpu", name: "Core Ultra 7 265K", brand: "Intel", price: 300, socket: "LGA1851", tdp: 125, tier: 7, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-265K/dp/B0DFK2MH2D" },
-  { id: "ryzen-9-7900x", category: "cpu", name: "Ryzen 9 7900X", brand: "AMD", price: 380, socket: "AM5", tdp: 120, tier: 8, amazonUrl: "https://www.amazon.com/AMD-7900X-24-Thread-Unlocked-Processor/dp/B0BBJ59WJ4" },
-  { id: "ryzen-9-9900x", category: "cpu", name: "Ryzen 9 9900X", brand: "AMD", price: 400, socket: "AM5", tdp: 120, tier: 8, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9900X-24-Thread-Processor/dp/B0D6NN87T8" },
-  { id: "core-ultra-9-285k", category: "cpu", name: "Core Ultra 9 285K", brand: "Intel", price: 500, socket: "LGA1851", tdp: 125, tier: 9, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-285K/dp/B0DFKC99VL" },
-  { id: "ryzen-9-9950x", category: "cpu", name: "Ryzen 9 9950X", brand: "AMD", price: 575, socket: "AM5", tdp: 170, tier: 10, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9950X-32-Thread-Processor/dp/B0D6NNRBGP" },
+  { id: "ryzen-7-5800x3d", category: "cpu", name: "Ryzen 7 5800X3D", brand: "AMD", price: 349, socket: "AM4", tdp: 105, tier: 6, gamingIndex: 68, amazonUrl: "https://www.amazon.com/AMD-5800X3D-16-Thread-Processor-Technology/dp/B09VCJ2SHD" },
+  { id: "ryzen-5-7500f", category: "cpu", name: "Ryzen 5 7500F", brand: "AMD", price: 150, socket: "AM5", tdp: 65, tier: 5, gamingIndex: 62, amazonUrl: "https://www.amazon.com/AMD-Ryzen-7500F-3-7GHz-Threads/dp/B0D1CK42PV" },
+  { id: "core-ultra-5-225f", category: "cpu", name: "Core Ultra 5 225F", brand: "Intel", price: 210, socket: "LGA1851", tdp: 65, tier: 4, gamingIndex: 57, amazonUrl: "https://www.amazon.com/Intel%C2%AE-CoreTM-Desktop-Processor-P-cores/dp/B0DT7CW7VR" },
+  { id: "ryzen-5-9600x", category: "cpu", name: "Ryzen 5 9600X", brand: "AMD", price: 235, socket: "AM5", tdp: 65, tier: 6, gamingIndex: 72.6, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9600X-12-Thread-Processor/dp/B0D6NN6TM7" },
+  { id: "ryzen-7-7700", category: "cpu", name: "Ryzen 7 7700", brand: "AMD", price: 270, socket: "AM5", tdp: 65, tier: 5, gamingIndex: 65, amazonUrl: "https://www.amazon.com/AMD-7700-16-Thread-Unlocked-Processor/dp/B0BMQHSCVF" },
+  { id: "core-ultra-5-245k", category: "cpu", name: "Core Ultra 5 245K", brand: "Intel", price: 270, socket: "LGA1851", tdp: 125, tier: 5, gamingIndex: 67.1, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-245K/dp/B0DFK2P311" },
+  { id: "ryzen-7-9700x", category: "cpu", name: "Ryzen 7 9700X", brand: "AMD", price: 310, socket: "AM5", tdp: 65, tier: 7, gamingIndex: 75, amazonUrl: "https://www.amazon.com/AMD-9700X-16-Thread-Unlocked-Processor/dp/B0D6NMDNNX" },
+  { id: "core-ultra-7-265k", category: "cpu", name: "Core Ultra 7 265K", brand: "Intel", price: 300, socket: "LGA1851", tdp: 125, tier: 6, gamingIndex: 70.3, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-265K/dp/B0DFK2MH2D" },
+  { id: "ryzen-9-7900x", category: "cpu", name: "Ryzen 9 7900X", brand: "AMD", price: 380, socket: "AM5", tdp: 120, tier: 6, gamingIndex: 69.2, amazonUrl: "https://www.amazon.com/AMD-7900X-24-Thread-Unlocked-Processor/dp/B0BBJ59WJ4" },
+  { id: "ryzen-9-9900x", category: "cpu", name: "Ryzen 9 9900X", brand: "AMD", price: 400, socket: "AM5", tdp: 120, tier: 6, gamingIndex: 73.9, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9900X-24-Thread-Processor/dp/B0D6NN87T8" },
+  { id: "core-ultra-9-285k", category: "cpu", name: "Core Ultra 9 285K", brand: "Intel", price: 500, socket: "LGA1851", tdp: 125, tier: 6, gamingIndex: 71.8, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-285K/dp/B0DFKC99VL" },
+  { id: "ryzen-9-9950x", category: "cpu", name: "Ryzen 9 9950X", brand: "AMD", price: 575, socket: "AM5", tdp: 170, tier: 7, gamingIndex: 76.9, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9950X-32-Thread-Processor/dp/B0D6NNRBGP" },
 ];
 
 // tier reflects VRM/build quality and chipset class (A620 < B650 < B850 < X870E; B860 < Z890),
