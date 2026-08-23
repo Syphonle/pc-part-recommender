@@ -76,6 +76,14 @@ export const cpus: Cpu[] = [
   { id: "ryzen-9-9900x", category: "cpu", name: "Ryzen 9 9900X", brand: "AMD", price: 400, socket: "AM5", tdp: 120, tier: 6, gamingIndex: 73.9, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9900X-24-Thread-Processor/dp/B0D6NN87T8" },
   { id: "core-ultra-9-285k", category: "cpu", name: "Core Ultra 9 285K", brand: "Intel", price: 500, socket: "LGA1851", tdp: 125, tier: 6, gamingIndex: 71.8, amazonUrl: "https://www.amazon.com/Intel-Core-Ultra-Processor-285K/dp/B0DFKC99VL" },
   { id: "ryzen-9-9950x", category: "cpu", name: "Ryzen 9 9950X", brand: "AMD", price: 575, socket: "AM5", tdp: 170, tier: 7, gamingIndex: 76.9, amazonUrl: "https://www.amazon.com/AMD-RyzenTM-9950X-32-Thread-Processor/dp/B0D6NNRBGP" },
+  // AM5 X3D — the 3D V-Cache lineup, all sourced from the same techfuelhq hierarchy as the
+  // non-X3D chips above. These are the real reason gaming tiers 8-10 exist in the catalog at
+  // all: no non-X3D chip gets close, since gaming just doesn't scale with core count/clocks
+  // the way productivity workloads do, but the extra cache is disproportionately good for it.
+  { id: "ryzen-5-7600x3d", category: "cpu", name: "Ryzen 5 7600X3D", brand: "AMD", price: 230, socket: "AM5", tdp: 65, tier: 7, gamingIndex: 80.6, amazonUrl: "https://amazon.com/AMD-7600X3D-Raphael-4-1GHz-Processor/dp/B0F9XH8DBP" },
+  { id: "ryzen-7-7800x3d", category: "cpu", name: "Ryzen 7 7800X3D", brand: "AMD", price: 334, socket: "AM5", tdp: 120, tier: 8, gamingIndex: 85.6, amazonUrl: "https://www.amazon.com/AMD-Ryzen-7800X3D-16-Thread-Processor/dp/B0BTZB7F88" },
+  { id: "ryzen-7-9800x3d", category: "cpu", name: "Ryzen 7 9800X3D", brand: "AMD", price: 465, socket: "AM5", tdp: 120, tier: 10, gamingIndex: 97.0, amazonUrl: "https://www.amazon.com/AMD-9800X3D-16-Thread-Desktop-Processor/dp/B0DKFMSMYK" },
+  { id: "ryzen-9-9950x3d", category: "cpu", name: "Ryzen 9 9950X3D", brand: "AMD", price: 650, socket: "AM5", tdp: 170, tier: 9, gamingIndex: 95.7, amazonUrl: "https://www.amazon.com/AMD-Ryzen-9950X3D-16-Core-Processor/dp/B0DVZSG8D5" },
 ];
 
 // tier reflects VRM/build quality and chipset class (A620 < B650 < B850 < X870E; B860 < Z890),

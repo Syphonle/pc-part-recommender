@@ -74,41 +74,74 @@ function cheapestMeeting<T extends { price: number }>(parts: T[], predicate: (p:
 }
 
 /**
- * Spend real leftover budget upgrading the CPU (same socket, so the already-chosen
- * motherboard/RAM stay valid) instead of just reporting it as unused headroom — e.g. a
- * Ryzen 5 5500 build with $50+ to spare should bump to a 5600 rather than sitting idle.
- * Only upgrades while the existing motherboard's tier and PSU's wattage can still support
- * the stronger CPU; never re-picks the motherboard/PSU themselves.
+ * Spend real leftover budget upgrading the CPU (same socket, so RAM stays valid) instead of
+ * just reporting it as unused headroom — e.g. a Ryzen 5 5500 build with $50+ to spare should
+ * bump to a 5600 rather than sitting idle. Unlike a CPU-only upgrade, this also upgrades the
+ * motherboard (and re-validates/upgrades the PSU) when the stronger CPU needs it, so the
+ * ceiling isn't artificially set by whatever board got picked for the original, weaker CPU —
+ * that cap was exactly what made flagship boards and X3D-class CPUs unreachable in practice
+ * even on huge budgets. Each step only commits if the CPU + motherboard + PSU price delta
+ * together still fits the remaining budget.
  */
-function upgradeCpuWithLeftoverBudget(
+function upgradeBuildWithLeftoverBudget(
   startCpu: Cpu,
-  motherboard: Motherboard,
-  psu: Psu,
+  startMotherboard: Motherboard,
+  startPsu: Psu,
   gpu: Gpu,
   cpus: Cpu[],
+  motherboards: Motherboard[],
+  psus: Psu[],
   startRemaining: number
-): { cpu: Cpu; remaining: number } {
+): { cpu: Cpu; motherboard: Motherboard; psu: Psu; remaining: number } {
   let cpu = startCpu;
+  let motherboard = startMotherboard;
+  let psu = startPsu;
   let remaining = startRemaining;
 
   while (true) {
-    const candidates = cpus.filter((c) => {
-      if (c.socket !== cpu.socket || c.gamingIndex <= cpu.gamingIndex) return false;
-      if (c.price - cpu.price > remaining) return false;
-      if (motherboard.tier < c.tier - MOBO_TIER_SLACK) return false;
-      const required = Math.max(gpu.recommendedPsuWatts, gpu.tdp + c.tdp + PSU_HEADROOM_WATTS);
-      return psu.wattage >= required;
-    });
-    if (candidates.length === 0) break;
+    let best: { cpu: Cpu; motherboard: Motherboard; psu: Psu; delta: number } | null = null;
 
-    // Best gaming performance affordable; cheapest as a tie-breaker.
-    candidates.sort((a, b) => b.gamingIndex - a.gamingIndex || a.price - b.price);
-    const next = candidates[0];
-    remaining -= next.price - cpu.price;
-    cpu = next;
+    for (const candidate of cpus) {
+      if (candidate.socket !== cpu.socket || candidate.gamingIndex <= cpu.gamingIndex) continue;
+
+      const requiredMoboTier = candidate.tier - MOBO_TIER_SLACK;
+      const candidateMobo =
+        motherboard.tier >= requiredMoboTier
+          ? motherboard
+          : cheapestMeeting(
+              motherboards.filter((m) => m.socket === candidate.socket),
+              (m) => m.tier >= requiredMoboTier
+            );
+      if (candidateMobo.tier < requiredMoboTier) continue; // catalog has no board strong enough
+
+      const requiredWattage = Math.max(gpu.recommendedPsuWatts, gpu.tdp + candidate.tdp + PSU_HEADROOM_WATTS);
+      const requiredPsuTier = gpu.tier - PSU_TIER_SLACK;
+      const candidatePsu =
+        psu.wattage >= requiredWattage && psu.tier >= requiredPsuTier
+          ? psu
+          : cheapestMeeting(
+              psus.filter((p) => p.wattage >= requiredWattage),
+              (p) => p.tier >= requiredPsuTier
+            );
+      if (candidatePsu.wattage < requiredWattage) continue; // catalog has no PSU strong enough
+
+      const delta =
+        candidate.price - cpu.price + (candidateMobo.price - motherboard.price) + (candidatePsu.price - psu.price);
+      if (delta > remaining) continue;
+
+      if (!best || candidate.gamingIndex > best.cpu.gamingIndex || (candidate.gamingIndex === best.cpu.gamingIndex && delta < best.delta)) {
+        best = { cpu: candidate, motherboard: candidateMobo, psu: candidatePsu, delta };
+      }
+    }
+
+    if (!best) break;
+    remaining -= best.delta;
+    cpu = best.cpu;
+    motherboard = best.motherboard;
+    psu = best.psu;
   }
 
-  return { cpu, remaining };
+  return { cpu, motherboard, psu, remaining };
 }
 
 export function recommendBuild(
@@ -177,7 +210,7 @@ export function recommendBuild(
   const motherboardCandidates = motherboards
     .filter((m) => m.socket === cpu.socket && m.tier >= cpu.tier - MOBO_TIER_SLACK)
     .sort((a, b) => a.price - b.price);
-  const motherboard =
+  let motherboard =
     motherboardCandidates.length > 0
       ? motherboardCandidates[0]
       : cheapest(motherboards.filter((m) => m.socket === cpu.socket));
@@ -188,7 +221,7 @@ export function recommendBuild(
   const psuCandidates = psus
     .filter((p) => p.wattage >= requiredWattage && p.tier >= gpu.tier - PSU_TIER_SLACK)
     .sort((a, b) => a.price - b.price);
-  const psu =
+  let psu =
     psuCandidates.length > 0
       ? psuCandidates[0]
       : [...psus.filter((p) => p.wattage >= requiredWattage)].sort((a, b) => a.price - b.price)[0] ??
@@ -206,10 +239,20 @@ export function recommendBuild(
   const storage = storageTarget.price <= remaining ? storageTarget : cheapest(storages);
   remaining -= storage.price;
 
-  // Real leftover budget goes toward a CPU upgrade before anything else — more genuine value
-  // than a nicer case, and the whole reason this step exists is to not leave money on the
-  // table when e.g. a 5500 build could stretch to a 5600 for a few dollars more.
-  ({ cpu, remaining } = upgradeCpuWithLeftoverBudget(cpu, motherboard, psu, gpu, cpus, remaining));
+  // Real leftover budget goes toward a CPU (and, if needed, motherboard/PSU) upgrade before
+  // anything else — more genuine value than a nicer case, and the whole reason this step
+  // exists is to not leave money on the table when e.g. a 5500 build could stretch to a 5600,
+  // or a huge budget could stretch all the way to an X3D chip on a board that can drive it.
+  ({ cpu, motherboard, psu, remaining } = upgradeBuildWithLeftoverBudget(
+    cpu,
+    motherboard,
+    psu,
+    gpu,
+    cpus,
+    motherboards,
+    psus,
+    remaining
+  ));
 
   // The case is the one place spending any budget still left has a real (if minor) upside —
   // cooling, build quality, aesthetics — and it's capped low, so it won't run away with it.
