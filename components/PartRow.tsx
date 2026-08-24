@@ -1,6 +1,7 @@
 import type { Part } from "@/lib/types";
 import { amazonLinkFor, retailerSearchUrl } from "@/lib/retailerLinks";
 import { categoryLabels } from "@/lib/data/categoryMeta";
+import { formatCheckedDate, lastCheckedAt } from "@/lib/priceFreshness";
 
 export function partDetail(part: Part): string | null {
   switch (part.category) {
@@ -25,6 +26,7 @@ export function partDetail(part: Part): string | null {
 
 export function PartRow({ part, isLast }: { part: Part; isLast: boolean }) {
   const detail = partDetail(part);
+  const checkedAt = lastCheckedAt(part.id);
   return (
     <tr className={isLast ? "" : "border-b"} style={{ borderColor: "var(--surface-border)" }}>
       <td className="py-2.5 pr-3 align-top text-xs whitespace-nowrap" style={{ color: "var(--viz-text-muted)" }}>
@@ -42,6 +44,11 @@ export function PartRow({ part, isLast }: { part: Part; isLast: boolean }) {
       </td>
       <td className="py-2.5 pr-3 text-right align-top font-medium tabular-nums whitespace-nowrap" style={{ color: "var(--viz-text-primary)" }}>
         ${part.price}
+        {checkedAt && (
+          <div className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--viz-text-muted)" }}>
+            Verified {formatCheckedDate(checkedAt)}
+          </div>
+        )}
       </td>
       <td className="py-2.5 align-top text-right whitespace-nowrap">
         <div className="flex justify-end gap-3 text-xs font-medium">

@@ -107,6 +107,14 @@ export interface Benchmark {
   fps: number;
 }
 
+/** A single "we checked this part's price and it was $X" record. See lib/data/priceHistory.ts. */
+export interface PriceCheck {
+  partId: string;
+  price: number;
+  /** ISO date (YYYY-MM-DD) — the day the price was verified, not a full timestamp. */
+  checkedAt: string;
+}
+
 export interface GameTarget {
   gameId: string;
   targetFps: number;
