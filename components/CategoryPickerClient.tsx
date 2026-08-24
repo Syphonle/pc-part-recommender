@@ -49,6 +49,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
   const router = useRouter();
   const { draft, setDraft } = useBuildDraft();
   const [facetSelections, setFacetSelections] = useState<Record<string, Set<string>>>({});
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const gpu = findById(gpus, draft.gpuId);
   const cpu = findById(cpus, draft.cpuId);
@@ -91,7 +92,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
 
   const filtered = [...compatiblePool]
     .filter((p) => facets.every((f) => !facetSelections[f.key]?.size || facetSelections[f.key].has(f.getValue(p))))
-    .sort((a, b) => a.price - b.price);
+    .sort((a, b) => (sortOrder === "asc" ? a.price - b.price : b.price - a.price));
 
   const draftKey = draftKeyByCategory[category];
   const selectedId = draft[draftKey] as string | null;
@@ -162,8 +163,39 @@ export function CategoryPickerClient({ category }: { category: Category }) {
           </div>
         )}
 
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+            Sort by price
+          </span>
+          <div className="inline-flex overflow-hidden rounded border" style={{ borderColor: "var(--viz-baseline)" }}>
+            {(
+              [
+                { value: "asc" as const, label: "Low to high" },
+                { value: "desc" as const, label: "High to low" },
+              ]
+            ).map((option, i) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSortOrder(option.value)}
+                aria-pressed={sortOrder === option.value}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  i > 0 ? "border-l" : ""
+                } ${sortOrder === option.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
+                style={{
+                  borderColor: "var(--viz-baseline)",
+                  backgroundColor: sortOrder === option.value ? "var(--accent)" : "transparent",
+                  color: sortOrder === option.value ? "var(--accent-contrast)" : "var(--viz-text-primary)",
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div
-          className="mt-6 flex flex-col rounded-md border"
+          className="mt-3 flex flex-col rounded-md border"
           style={{ backgroundColor: "var(--viz-surface)", borderColor: "var(--surface-border)", boxShadow: "var(--card-shadow)" }}
         >
           {filtered.length === 0 && (
