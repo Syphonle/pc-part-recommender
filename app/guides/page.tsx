@@ -4,7 +4,7 @@ import { buildGuides } from "@/lib/data/guides";
 export default function Guides() {
   return (
     <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-2xl flex-col">
+      <main className="relative z-10 flex w-full max-w-3xl flex-col">
         <SiteHeader
           title="How to build your PC"
           description="Step-by-step video guides for putting your parts together, in the order you'll actually need them. Videos are in production — this list will fill in as each one goes live."

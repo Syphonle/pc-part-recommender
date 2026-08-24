@@ -113,7 +113,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
 
   return (
     <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-2xl flex-col">
+      <main className="relative z-10 flex w-full max-w-3xl flex-col">
         <div className="flex flex-col gap-2 border-b pb-6" style={{ borderColor: "var(--surface-border)" }}>
           <Link href="/build/" className="font-mono text-xs font-medium hover:underline" style={{ color: "var(--viz-text-muted)" }}>
             ← Back to build

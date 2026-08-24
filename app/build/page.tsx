@@ -82,7 +82,7 @@ export default function BuildYourOwn() {
 
   return (
     <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-2xl flex-col">
+      <main className="relative z-10 flex w-full max-w-3xl flex-col">
         <SiteHeader
           title="Build your own"
           description="Tap a category to browse and filter its options. Compatibility gets checked as you go, and an FPS preview shows up once you've picked a GPU and some games."

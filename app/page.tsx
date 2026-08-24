@@ -24,7 +24,7 @@ const modes = [
 export default function Home() {
   return (
     <div className="flex flex-1 justify-center px-4 py-16 sm:py-24" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-4xl flex-col">
+      <main className="relative z-10 flex w-full max-w-5xl flex-col">
         <div className="flex flex-col gap-5">
           <span
             className="font-mono text-xs font-medium tracking-widest uppercase"

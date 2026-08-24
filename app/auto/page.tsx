@@ -40,7 +40,7 @@ export default function AutoRecommend() {
 
   return (
     <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-2xl flex-col">
+      <main className="relative z-10 flex w-full max-w-3xl flex-col">
         <SiteHeader
           title="Get a recommendation"
           description="Set a budget, pick the games you play, and set a target FPS for each — we'll put together a compatible build to match."
