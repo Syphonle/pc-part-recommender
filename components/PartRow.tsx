@@ -29,7 +29,7 @@ export function PartRow({ part, isLast }: { part: Part; isLast: boolean }) {
   const checkedAt = lastCheckedAt(part.id);
   return (
     <tr className={isLast ? "" : "border-b"} style={{ borderColor: "var(--surface-border)" }}>
-      <td className="py-2.5 pr-3 align-top text-xs whitespace-nowrap" style={{ color: "var(--viz-text-muted)" }}>
+      <td className="py-2.5 pr-3 align-top font-mono text-xs whitespace-nowrap" style={{ color: "var(--viz-text-muted)" }}>
         {categoryLabels[part.category]}
       </td>
       <td className="py-2.5 pr-3 align-top">
@@ -37,12 +37,12 @@ export function PartRow({ part, isLast }: { part: Part; isLast: boolean }) {
           {part.name}
         </div>
         {detail && (
-          <div className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+          <div className="font-mono text-xs" style={{ color: "var(--viz-text-secondary)" }}>
             {detail}
           </div>
         )}
       </td>
-      <td className="py-2.5 pr-3 text-right align-top font-medium tabular-nums whitespace-nowrap" style={{ color: "var(--viz-text-primary)" }}>
+      <td className="py-2.5 pr-3 text-right align-top font-mono font-medium tabular-nums whitespace-nowrap" style={{ color: "var(--viz-text-primary)" }}>
         ${part.price}
         {checkedAt && (
           <div className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--viz-text-muted)" }}>

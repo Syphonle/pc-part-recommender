@@ -112,13 +112,13 @@ export function CategoryPickerClient({ category }: { category: Category }) {
   }
 
   return (
-    <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
+    <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
-        <div className="flex flex-col gap-1 border-b pb-4" style={{ borderColor: "var(--surface-border)" }}>
-          <Link href="/build/" className="text-xs font-medium hover:underline" style={{ color: "var(--viz-text-muted)" }}>
+        <div className="flex flex-col gap-2 border-b pb-6" style={{ borderColor: "var(--surface-border)" }}>
+          <Link href="/build/" className="font-mono text-xs font-medium hover:underline" style={{ color: "var(--viz-text-muted)" }}>
             ← Back to build
           </Link>
-          <h1 className="text-lg font-semibold tracking-tight" style={{ color: "var(--viz-text-primary)" }}>
+          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "var(--viz-text-primary)" }}>
             Choose a {categoryLabels[category].toLowerCase()}
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "var(--viz-text-secondary)" }}>
@@ -130,12 +130,12 @@ export function CategoryPickerClient({ category }: { category: Category }) {
 
         {facetOptions.length > 0 && (
           <div
-            className="mt-6 flex flex-wrap gap-x-8 gap-y-4 rounded-md border p-4"
+            className="mt-6 flex flex-wrap gap-x-8 gap-y-4 rounded-lg border p-4"
             style={{ backgroundColor: "var(--viz-surface)", borderColor: "var(--surface-border)" }}
           >
             {facetOptions.map(({ facet, values }) => (
               <div key={facet.key} className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                   {facet.label}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -146,7 +146,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
                         key={value}
                         type="button"
                         onClick={() => toggleFacetValue(facet.key, value)}
-                        className="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+                        className="rounded-full border px-2.5 py-1 font-mono text-xs font-medium transition-colors"
                         style={{
                           borderColor: active ? "var(--accent)" : "var(--viz-baseline)",
                           backgroundColor: active ? "var(--accent)" : "transparent",
@@ -164,7 +164,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
         )}
 
         <div className="mt-6 flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+          <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
             Sort by price
           </span>
           <div className="inline-flex overflow-hidden rounded border" style={{ borderColor: "var(--viz-baseline)" }}>
@@ -179,7 +179,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
                 type="button"
                 onClick={() => setSortOrder(option.value)}
                 aria-pressed={sortOrder === option.value}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 font-mono text-xs font-medium transition-colors ${
                   i > 0 ? "border-l" : ""
                 } ${sortOrder === option.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
                 style={{
@@ -195,8 +195,8 @@ export function CategoryPickerClient({ category }: { category: Category }) {
         </div>
 
         <div
-          className="mt-3 flex flex-col rounded-md border"
-          style={{ backgroundColor: "var(--viz-surface)", borderColor: "var(--surface-border)", boxShadow: "var(--card-shadow)" }}
+          className="mt-3 flex flex-col rounded-lg border"
+          style={{ backgroundColor: "var(--viz-surface)", borderColor: "var(--surface-border)" }}
         >
           {filtered.length === 0 && (
             <div className="p-6 text-sm" style={{ color: "var(--viz-text-muted)" }}>
@@ -220,7 +220,7 @@ export function CategoryPickerClient({ category }: { category: Category }) {
                     {part.name}
                   </span>
                   {detail && (
-                    <span className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+                    <span className="font-mono text-xs" style={{ color: "var(--viz-text-secondary)" }}>
                       {detail}
                     </span>
                   )}
@@ -246,13 +246,13 @@ export function CategoryPickerClient({ category }: { category: Category }) {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
-                  <span className="font-medium tabular-nums" style={{ color: "var(--viz-text-primary)" }}>
+                  <span className="font-mono font-medium tabular-nums" style={{ color: "var(--viz-text-primary)" }}>
                     ${part.price}
                   </span>
                   <button
                     type="button"
                     onClick={() => selectPart(part.id)}
-                    className="rounded px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors hover:bg-[var(--accent-hover)]"
+                    className="hud-button rounded px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors hover:bg-[var(--accent-hover)]"
                     style={{
                       backgroundColor: isSelected ? "var(--viz-good)" : "var(--accent)",
                       color: "var(--accent-contrast)",

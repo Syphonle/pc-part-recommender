@@ -39,7 +39,7 @@ export default function AutoRecommend() {
   }
 
   return (
-    <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
+    <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
         <SiteHeader
           title="Get a recommendation"
@@ -47,11 +47,10 @@ export default function AutoRecommend() {
         />
 
         <div
-          className="flex flex-col rounded-md border"
+          className="flex flex-col rounded-lg border"
           style={{
             backgroundColor: "var(--viz-surface)",
             borderColor: "var(--surface-border)",
-            boxShadow: "var(--card-shadow)",
             marginTop: "1.5rem",
           }}
         >
@@ -63,12 +62,12 @@ export default function AutoRecommend() {
             <form onSubmit={handleSubmit} className="flex flex-col">
               <div className="flex flex-wrap gap-8 p-6">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="budget" className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                  <label htmlFor="budget" className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                     Budget
                   </label>
                   <div className="relative w-32">
                     <span
-                      className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm"
+                      className="pointer-events-none absolute inset-y-0 left-3 flex items-center font-mono text-sm"
                       style={{ color: "var(--viz-text-muted)" }}
                     >
                       $
@@ -79,7 +78,7 @@ export default function AutoRecommend() {
                       step={10}
                       value={budget}
                       onChange={setBudget}
-                      className="w-full rounded border py-1.5 pl-6 pr-3 text-sm tabular-nums"
+                      className="w-full rounded border py-1.5 pr-3 pl-6 font-mono text-sm tabular-nums"
                       style={{
                         borderColor: "var(--viz-baseline)",
                         color: "var(--viz-text-primary)",
@@ -90,7 +89,7 @@ export default function AutoRecommend() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                  <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                     Resolution
                   </span>
                   <div
@@ -103,7 +102,7 @@ export default function AutoRecommend() {
                         type="button"
                         onClick={() => setResolution(r.value)}
                         aria-pressed={resolution === r.value}
-                        className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                        className={`px-4 py-1.5 font-mono text-sm font-medium transition-colors ${
                           i > 0 ? "border-l" : ""
                         } ${resolution === r.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
                         style={{
@@ -120,7 +119,7 @@ export default function AutoRecommend() {
               </div>
 
               <div className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                   Games
                 </span>
                 <GameSelector selected={games} onChange={setGames} />
@@ -135,7 +134,7 @@ export default function AutoRecommend() {
               <div className="flex justify-end border-t p-4" style={{ borderColor: "var(--surface-border)" }}>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded px-5 py-2 text-sm font-medium transition-colors hover:bg-[var(--accent-hover)]"
+                  className="hud-button font-display inline-flex items-center gap-2 rounded px-5 py-2 text-sm font-bold transition-colors hover:bg-[var(--accent-hover)]"
                   style={{ backgroundColor: "var(--accent)", color: "var(--accent-contrast)" }}
                 >
                   Recommend a build

@@ -10,7 +10,7 @@ export function BuildResultView({ result, onReset }: { result: BuildResult; onRe
   return (
     <div className="flex w-full flex-col gap-7">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold tracking-tight" style={{ color: "var(--viz-text-primary)" }}>
+        <h2 className="font-display text-xl font-bold tracking-tight" style={{ color: "var(--viz-text-primary)" }}>
           Recommended build
         </h2>
         <button
@@ -25,7 +25,7 @@ export function BuildResultView({ result, onReset }: { result: BuildResult; onRe
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between text-sm">
           <span style={{ color: "var(--viz-text-secondary)" }}>Total cost</span>
-          <span className="tabular-nums font-medium" style={{ color: overBudget ? "var(--viz-critical)" : "var(--viz-text-primary)" }}>
+          <span className="font-mono tabular-nums font-medium" style={{ color: overBudget ? "var(--viz-critical)" : "var(--viz-text-primary)" }}>
             ${totalPrice} <span style={{ color: "var(--viz-text-muted)" }}>/ ${budget} budget</span>
           </span>
         </div>
@@ -39,14 +39,14 @@ export function BuildResultView({ result, onReset }: { result: BuildResult; onRe
           />
         </div>
         {!overBudget && (
-          <div className="text-xs" style={{ color: "var(--viz-text-muted)" }}>
+          <div className="font-mono text-xs" style={{ color: "var(--viz-text-muted)" }}>
             ${remaining} left under budget
           </div>
         )}
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+        <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
           Parts list
         </h3>
         <table className="w-full border-collapse text-sm">
@@ -75,7 +75,7 @@ export function BuildResultView({ result, onReset }: { result: BuildResult; onRe
       </section>
 
       <section className="flex flex-col gap-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+        <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
           Predicted FPS by game
         </h3>
         <div className="flex flex-col gap-4">
@@ -94,7 +94,7 @@ export function BuildResultView({ result, onReset }: { result: BuildResult; onRe
             color: "var(--viz-text-primary)",
           }}
         >
-          <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-critical)" }}>
+          <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-critical)" }}>
             Notes
           </h3>
           <ul className="flex flex-col gap-1 list-disc pl-4">

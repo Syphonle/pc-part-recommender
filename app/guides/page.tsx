@@ -3,7 +3,7 @@ import { buildGuides } from "@/lib/data/guides";
 
 export default function Guides() {
   return (
-    <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
+    <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
         <SiteHeader
           title="How to build your PC"
@@ -11,11 +11,10 @@ export default function Guides() {
         />
 
         <div
-          className="mt-6 flex flex-col rounded-md border"
+          className="mt-6 flex flex-col rounded-lg border"
           style={{
             backgroundColor: "var(--viz-surface)",
             borderColor: "var(--surface-border)",
-            boxShadow: "var(--card-shadow)",
           }}
         >
           {buildGuides.map((guide, i) => (
@@ -25,10 +24,10 @@ export default function Guides() {
               style={{ borderColor: "var(--surface-border)" }}
             >
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
-                  Step {i + 1}
+                <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--accent)" }}>
+                  Step {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="font-medium" style={{ color: "var(--viz-text-primary)" }}>
+                <span className="font-display font-bold" style={{ color: "var(--viz-text-primary)" }}>
                   {guide.title}
                 </span>
                 <span className="text-sm leading-relaxed" style={{ color: "var(--viz-text-secondary)" }}>
@@ -42,7 +41,7 @@ export default function Guides() {
                     href={guide.youtubeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--accent-hover)]"
+                    className="hud-button inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--accent-hover)]"
                     style={{ backgroundColor: "var(--accent)", color: "var(--accent-contrast)" }}
                   >
                     Watch

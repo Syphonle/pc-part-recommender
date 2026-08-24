@@ -81,7 +81,7 @@ export default function BuildYourOwn() {
   }
 
   return (
-    <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
+    <div className="flex flex-1 justify-center px-4 py-16" style={{ backgroundColor: "var(--background)" }}>
       <main className="flex w-full max-w-2xl flex-col">
         <SiteHeader
           title="Build your own"
@@ -89,19 +89,18 @@ export default function BuildYourOwn() {
         />
 
         <div
-          className="flex flex-col rounded-md border"
+          className="flex flex-col rounded-lg border"
           style={{
             backgroundColor: "var(--viz-surface)",
             borderColor: "var(--surface-border)",
-            boxShadow: "var(--card-shadow)",
             marginTop: "1.5rem",
           }}
         >
           <div className="flex items-center justify-between p-6">
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+            <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
               Total
             </span>
-            <span className="text-lg font-semibold tabular-nums" style={{ color: "var(--viz-text-primary)" }}>
+            <span className="font-display text-lg font-bold tabular-nums" style={{ color: "var(--viz-text-primary)" }}>
               ${totalPrice}
             </span>
           </div>
@@ -116,12 +115,12 @@ export default function BuildYourOwn() {
                   style={{ borderColor: "var(--surface-border)" }}
                 >
                   <Link href={`/build/${category}/`} className="flex flex-1 flex-col gap-0.5 group">
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+                    <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                       {categoryLabels[category]}
                     </span>
                     {part ? (
                       <span className="text-sm font-medium group-hover:underline" style={{ color: "var(--viz-text-primary)" }}>
-                        {part.name} — ${part.price}
+                        {part.name} — <span className="font-mono">${part.price}</span>
                       </span>
                     ) : (
                       <span className="text-sm group-hover:underline" style={{ color: "var(--accent)" }}>
@@ -146,7 +145,7 @@ export default function BuildYourOwn() {
 
           {issues.length > 0 && (
             <section className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-critical)" }}>
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-critical)" }}>
                 Compatibility
               </h3>
               <ul className="flex flex-col gap-1.5 text-sm">
@@ -166,7 +165,7 @@ export default function BuildYourOwn() {
 
           {selectedParts.length > 0 && (
             <section className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                 Parts list
               </h3>
               <table className="w-full border-collapse text-sm">
@@ -196,7 +195,7 @@ export default function BuildYourOwn() {
           )}
 
           <div className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+            <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
               Resolution
             </span>
             <div className="inline-flex w-fit overflow-hidden rounded border" style={{ borderColor: "var(--viz-baseline)" }}>
@@ -206,7 +205,7 @@ export default function BuildYourOwn() {
                   type="button"
                   onClick={() => setResolution(r.value)}
                   aria-pressed={draft.resolution === r.value}
-                  className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`px-4 py-1.5 font-mono text-sm font-medium transition-colors ${
                     i > 0 ? "border-l" : ""
                   } ${draft.resolution === r.value ? "hover:bg-[var(--accent-hover)]" : "hover:bg-[var(--viz-gridline)]"}`}
                   style={{
@@ -222,7 +221,7 @@ export default function BuildYourOwn() {
           </div>
 
           <div className="flex flex-col gap-2 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+            <span className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
               Games (optional — for the FPS preview)
             </span>
             <GameSelector selected={draft.games} onChange={setGames} />
@@ -230,7 +229,7 @@ export default function BuildYourOwn() {
 
           {gpu && draft.games.length > 0 && (
             <section className="flex flex-col gap-4 border-t p-6" style={{ borderColor: "var(--surface-border)" }}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--viz-text-muted)" }}>
                 Predicted FPS with {gpu.name}
               </h3>
               <div className="flex flex-col gap-4">

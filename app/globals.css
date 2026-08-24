@@ -1,23 +1,31 @@
 @import "tailwindcss";
 
+/*
+ * "Technical HUD" — a deliberate, dark-only visual identity for a PC-building tool. Not
+ * theme-aware by design: this look is built around a near-black base and a glowing accent,
+ * the same way benchmark overlays, terminals, and RGB-control software are — trying to also
+ * support a light variant would dilute the point of view, so there's no
+ * prefers-color-scheme branch here anymore.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0e0c;
+  --foreground: #eef4f0;
 
-  --viz-surface: #fcfcfb;
-  --viz-text-primary: #0b0b0b;
-  --viz-text-secondary: #52514e;
-  --viz-text-muted: #898781;
-  --viz-gridline: #e1e0d9;
-  --viz-baseline: #c3c2b7;
-  --viz-good: #0ca30c;
-  --viz-critical: #d03b3b;
+  --viz-surface: #121613;
+  --viz-text-primary: #eef4f0;
+  --viz-text-secondary: #a9b3ac;
+  --viz-text-muted: #6c7670;
+  --viz-gridline: #1c211d;
+  --viz-baseline: #2a302b;
+  --viz-good: #39ff8c;
+  --viz-critical: #ff5470;
 
-  --accent: #1c5cab;
-  --accent-hover: #184f95;
-  --accent-contrast: #ffffff;
-  --surface-border: rgba(11, 11, 11, 0.12);
-  --card-shadow: 0 1px 2px rgba(11, 11, 11, 0.04);
+  --accent: #39ff8c;
+  --accent-hover: #6dffab;
+  --accent-contrast: #06110a;
+  --surface-border: rgba(238, 244, 240, 0.1);
+  --card-shadow: none;
+  --accent-glow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent), 0 0 24px -6px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 @theme inline {
@@ -25,34 +33,22 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-
-    --viz-surface: #1a1a19;
-    --viz-text-primary: #ffffff;
-    --viz-text-secondary: #c3c2b7;
-    --viz-text-muted: #898781;
-    --viz-gridline: #2c2c2a;
-    --viz-baseline: #383835;
-    --viz-good: #0ca30c;
-    --viz-critical: #e66767;
-
-    --accent: #3987e5;
-    --accent-hover: #63a3ec;
-    --accent-contrast: #ffffff;
-    --surface-border: rgba(255, 255, 255, 0.14);
-    --card-shadow: none;
-  }
+  --font-display: var(--font-space-grotesk);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, Arial, Helvetica, sans-serif;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--foreground) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 3%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+}
+
+.font-display {
+  font-family: var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 input[type="number"] {
@@ -68,4 +64,25 @@ input[type="number"]:focus-visible {
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.hud-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.hud-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--surface-border));
+  box-shadow: var(--accent-glow);
+}
+
+.hud-button {
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.hud-button:hover {
+  box-shadow: var(--accent-glow);
+}
+
+.hud-button:active {
+  transform: scale(0.98);
 }

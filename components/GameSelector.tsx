@@ -52,14 +52,14 @@ export function GameSelector({
               {game.name}
             </label>
             {isSelected && (
-              <label className="flex shrink-0 items-center gap-1.5 text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+              <label className="flex shrink-0 items-center gap-1.5 font-mono text-xs" style={{ color: "var(--viz-text-secondary)" }}>
                 Target FPS
                 <NumberField
                   min={1}
                   max={500}
                   value={targetFps}
                   onChange={(value) => setTargetFps(game.id, value)}
-                  className="w-14 rounded border px-1.5 py-1 text-sm tabular-nums"
+                  className="w-14 rounded border px-1.5 py-1 font-mono text-sm tabular-nums"
                   style={{
                     borderColor: "var(--viz-baseline)",
                     color: "var(--viz-text-primary)",

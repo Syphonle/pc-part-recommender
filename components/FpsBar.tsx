@@ -10,10 +10,10 @@ export function FpsBar({ result }: { result: GameResult }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between text-sm">
-        <span style={{ color: "var(--viz-text-primary)" }} className="font-medium">
+        <span style={{ color: "var(--viz-text-primary)" }} className="font-display font-bold">
           {gameName}
         </span>
-        <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+        <span className="flex items-center gap-1.5 font-mono text-xs" style={{ color: "var(--viz-text-secondary)" }}>
           <span aria-hidden="true" style={{ color: statusVar }}>
             {met ? "✓" : "✕"}
           </span>
@@ -35,7 +35,7 @@ export function FpsBar({ result }: { result: GameResult }) {
           aria-hidden="true"
         />
       </div>
-      <div className="flex justify-between text-xs tabular-nums" style={{ color: "var(--viz-text-muted)" }}>
+      <div className="flex justify-between font-mono text-xs tabular-nums" style={{ color: "var(--viz-text-muted)" }}>
         <span>{predictedFps} fps predicted</span>
         <span>{targetFps} fps target</span>
       </div>

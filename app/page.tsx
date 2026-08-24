@@ -23,34 +23,50 @@ const modes = [
 
 export default function Home() {
   return (
-    <div className="flex flex-1 justify-center px-4 py-12" style={{ backgroundColor: "var(--background)" }}>
-      <main className="flex w-full max-w-2xl flex-col gap-1">
-        <h1 className="text-lg font-semibold tracking-tight" style={{ color: "var(--viz-text-primary)" }}>
-          PC Part Recommender
-        </h1>
-        <p className="pb-6 text-sm leading-relaxed" style={{ color: "var(--viz-text-secondary)" }}>
-          Choose how you want to put a build together.
-        </p>
+    <div className="flex flex-1 justify-center px-4 py-16 sm:py-24" style={{ backgroundColor: "var(--background)" }}>
+      <main className="flex w-full max-w-4xl flex-col">
+        <div className="flex flex-col gap-5">
+          <span
+            className="font-mono text-xs font-medium tracking-widest uppercase"
+            style={{ color: "var(--accent)" }}
+          >
+            {"// choose your path"}
+          </span>
+          <h1
+            className="font-display max-w-2xl text-4xl leading-[1.05] font-bold tracking-tight sm:text-6xl"
+            style={{ color: "var(--viz-text-primary)" }}
+          >
+            Build a PC that actually hits your target FPS.
+          </h1>
+          <p className="max-w-xl text-base leading-relaxed sm:text-lg" style={{ color: "var(--viz-text-secondary)" }}>
+            Real market prices, real benchmark data, full compatibility checking. Not guesses.
+          </p>
+        </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row">
-          {modes.map((mode) => (
+        <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {modes.map((mode, i) => (
             <Link
               key={mode.href}
               href={mode.href}
-              className="flex flex-1 flex-col gap-2 rounded-md border p-6 transition-colors hover:bg-[var(--viz-gridline)]"
+              className="hud-card group flex flex-col gap-3 rounded-lg border p-6"
               style={{
                 backgroundColor: "var(--viz-surface)",
                 borderColor: "var(--surface-border)",
-                boxShadow: "var(--card-shadow)",
               }}
             >
-              <span className="text-base font-semibold" style={{ color: "var(--viz-text-primary)" }}>
+              <span className="font-mono text-xs font-medium" style={{ color: "var(--viz-text-muted)" }}>
+                0{i + 1}
+              </span>
+              <span className="font-display text-lg font-bold" style={{ color: "var(--viz-text-primary)" }}>
                 {mode.title}
               </span>
               <span className="text-sm leading-relaxed" style={{ color: "var(--viz-text-secondary)" }}>
                 {mode.description}
               </span>
-              <span className="mt-2 text-sm font-medium" style={{ color: "var(--accent)" }}>
+              <span
+                className="mt-2 flex items-center gap-1 font-mono text-xs font-medium transition-transform group-hover:translate-x-1"
+                style={{ color: "var(--accent)" }}
+              >
                 Go →
               </span>
             </Link>
