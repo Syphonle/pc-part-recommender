@@ -22,24 +22,30 @@ import type { Case, Cooler, Cpu, Gpu, Motherboard, Part, Psu, Ram, Storage } fro
 // gamingIndex: real relative 1440p gaming performance from techfuelhq's 2026 GPU hierarchy
 // (RTX 5090 = 100) — the same source used for the FPS benchmark table, now also driving the
 // CPU-bottleneck check in lib/recommend.ts instead of the hand-guessed `tier` gap it used to.
+// da rulez #3: only cards you can actually buy new, not used-only. The RTX 40-series lineup
+// (4060, 4060 Ti, 4070, 4080 Super) was removed 2026-08-23 after confirming via hardware-news
+// coverage that NVIDIA wound the whole generation's production down through late 2024/early
+// 2026 to make room for RTX 50-series — by now they're increasingly used/clearance-only, not
+// reliably new stock. The RTX 3060 12GB is the one exception that stays: NVIDIA actually
+// resurrected it into new production in July 2026 specifically because of the shortage, so
+// it's a real current-production card despite being an old chip.
 export const gpus: Gpu[] = [
   { id: "arc-b570", category: "gpu", name: "Intel Arc B570", brand: "Intel", price: 259, tdp: 150, tier: 2, gamingIndex: 26.5, recommendedPsuWatts: 500, amazonUrl: "https://www.amazon.com/ASRock-B570-Challenger-Cooling-Graphics/dp/B0DQYM2MHX" },
   { id: "rtx-3060-12g", category: "gpu", name: "GeForce RTX 3060 12GB", brand: "NVIDIA", price: 280, tdp: 170, tier: 2, gamingIndex: 25.0, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-RTX-3060-12G/dp/B08WPRMVWB" },
   { id: "arc-b580", category: "gpu", name: "Intel Arc B580", brand: "Intel", price: 303, tdp: 190, tier: 3, gamingIndex: 30.3, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASRock-Intel-B580-Challenger-Graphics/dp/B0DNV4NWF7" },
   { id: "rx-7600", category: "gpu", name: "Radeon RX 7600", brand: "AMD", price: 279, tdp: 165, tier: 3, gamingIndex: 27.2, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/Sapphire-11324-01-20G-Radeon-Gaming-Graphics/dp/B0C4WBW3XX" },
-  { id: "rtx-4060", category: "gpu", name: "GeForce RTX 4060", brand: "NVIDIA", price: 339, tdp: 115, tier: 3, gamingIndex: 28.4, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-4060-Gaming-Graphics/dp/B0C7WCKXB6" },
   { id: "rtx-5060", category: "gpu", name: "GeForce RTX 5060", brand: "NVIDIA", price: 330, tdp: 145, tier: 4, gamingIndex: 35.8, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/ASUS-Graphics-DisplayPort-Axial-tech-Technology/dp/B0F8PR9L3X" },
   { id: "rx-9060xt-8g", category: "gpu", name: "Radeon RX 9060 XT 8GB", brand: "AMD", price: 400, tdp: 150, tier: 4, gamingIndex: 37.3, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-GeForce-Dual-Fan-Graphics-Warranty/dp/B0F8PR76W4" },
   { id: "rx-9060xt-16g", category: "gpu", name: "Radeon RX 9060 XT 16GB", brand: "AMD", price: 470, tdp: 160, tier: 5, gamingIndex: 40.2, recommendedPsuWatts: 450, amazonUrl: "https://www.amazon.com/ASUS-RadeonTM-Graphics-2-5-Slot-axial-tech/dp/B0F8PPT3G1" },
-  { id: "rtx-4060ti-16g", category: "gpu", name: "GeForce RTX 4060 Ti 16GB", brand: "NVIDIA", price: 450, tdp: 165, tier: 5, gamingIndex: 36.2, recommendedPsuWatts: 550, amazonUrl: "https://www.amazon.com/MSI-GeForce-Ventus-Black-Graphics/dp/B0CBK7BRL9" },
   { id: "rtx-5060ti-16g", category: "gpu", name: "GeForce RTX 5060 Ti 16GB", brand: "NVIDIA", price: 805, tdp: 180, tier: 5, gamingIndex: 43.9, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/ASUS-DisplayPort-2-5-Slot-Axial-tech-Technology/dp/B0F7WB6LSH" },
   { id: "rx-7700xt", category: "gpu", name: "Radeon RX 7700 XT", brand: "AMD", price: 409, tdp: 245, tier: 5, gamingIndex: 43.4, recommendedPsuWatts: 700, amazonUrl: "https://www.amazon.com/SAPPHIRE-PULSE-RADEON-GAMING-GDDR6-VIDEO/dp/B0CGLYMRFX" },
-  { id: "rtx-4070", category: "gpu", name: "GeForce RTX 4070", brand: "NVIDIA", price: 520, tdp: 200, tier: 6, gamingIndex: 46.5, recommendedPsuWatts: 600, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4070-Founders-Graphics/dp/B0C3SPXZJ8" },
   { id: "rtx-5070", category: "gpu", name: "GeForce RTX 5070", brand: "NVIDIA", price: 900, tdp: 220, tier: 6, gamingIndex: 57.6, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-GDDR7-Graphics-Graphite/dp/B0F7XHBT13" },
+  // The current real-market mid-range pick (per 2026 buying-guide coverage) — better raster
+  // value than the RTX 5070 at a lower price, which is what actually backfills the gap left
+  // by removing the RTX 4070 rather than a synthetic/invented card.
   { id: "rx-9070", category: "gpu", name: "Radeon RX 9070", brand: "AMD", price: 820, tdp: 220, tier: 7, gamingIndex: 62.1, recommendedPsuWatts: 650, amazonUrl: "https://www.amazon.com/GIGABYTE-Radeon-Graphics-GV-R9070GAMING-OC-16GD/dp/B0DS2QZC9P" },
   { id: "rx-9070xt", category: "gpu", name: "Radeon RX 9070 XT", brand: "AMD", price: 799, tdp: 304, tier: 7, gamingIndex: 69.7, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/Sapphire-11348-03-20G-RadeonTM-Gaming-Graphics/dp/B0DTHMPWFR" },
   { id: "rtx-5070ti", category: "gpu", name: "GeForce RTX 5070 Ti", brand: "NVIDIA", price: 1050, tdp: 300, tier: 8, gamingIndex: 69.8, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N507TGAMING-OC-16GD/dp/B0DTRC7782" },
-  { id: "rtx-4080-super", category: "gpu", name: "GeForce RTX 4080 Super", brand: "NVIDIA", price: 1000, tdp: 320, tier: 8, gamingIndex: 70.9, recommendedPsuWatts: 750, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-4080-Super-GDDR6X/dp/B0CVNM2LBK" },
   { id: "rtx-5080", category: "gpu", name: "GeForce RTX 5080", brand: "NVIDIA", price: 1500, tdp: 360, tier: 9, gamingIndex: 76.7, recommendedPsuWatts: 850, amazonUrl: "https://www.amazon.com/NVIDIA-GeForce-RTX-5080-Founders/dp/B0DYVCGVK4" },
   { id: "rtx-5090", category: "gpu", name: "GeForce RTX 5090", brand: "NVIDIA", price: 4700, tdp: 575, tier: 10, gamingIndex: 100.0, recommendedPsuWatts: 1000, amazonUrl: "https://www.amazon.com/GIGABYTE-Graphics-WINDFORCE-GV-N5090GAMING-OC-32GD/dp/B0DT7GBNWQ" },
 ];

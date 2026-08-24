@@ -31,6 +31,10 @@ import { memoryTypeForSocket, PSU_HEADROOM_WATTS } from "./compatibility";
  *    `ramForMemoryType`: crossing from DDR4 to DDR5 has to land on the 32GB floor, not just
  *    whatever capacity the build already had — so an AM4→AM5 platform crossover only goes
  *    through if it can afford to keep 32GB, otherwise the build stays on AM4.
+ * 3. Only recommend GPUs you can actually buy new, not used-only — enforced at the data layer,
+ *    not here: see the comment above the `gpus` array in lib/data/parts.ts. The RTX 40-series
+ *    (4060/4060 Ti/4070/4080 Super) was removed 2026-08-23 after confirming its production had
+ *    wound down; re-check before adding any GPU that isn't obviously current-gen.
  */
 const RULE_BUDGET_GPU_TIER_MAX = 3;
 
